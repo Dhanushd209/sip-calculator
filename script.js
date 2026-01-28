@@ -3,22 +3,32 @@ function formatMoney(num) {
 }
 
 function calculateSIP() {
-  const P = Number(document.getElementById("monthly").value);
+  const baseMonthly = Number(document.getElementById("monthly").value);
   const years = Number(document.getElementById("years").value);
   const annualRate = Number(document.getElementById("rate").value);
+  const stepUp = Number(document.getElementById("stepup").value);
 
-  const n = years * 12;
   const r = annualRate / 12 / 100;
 
-  const futureValue = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
-  const invested = P * n;
-  const gain = futureValue - invested;
+  let monthly = baseMonthly;
+  let totalInvested = 0;
+  let value = 0;
 
-  document.getElementById("invested").innerText = formatMoney(invested.toFixed(0));
-  document.getElementById("final").innerText = formatMoney(futureValue.toFixed(0));
+  for (let year = 1; year <= years; year++) {
+    for (let month = 1; month <= 12; month++) {
+      value = (value + monthly) * (1 + r);
+      totalInvested += monthly;
+    }
+    // increase SIP every year
+    monthly = monthly * (1 + stepUp / 100);
+  }
+
+  const gain = value - totalInvested;
+
+  document.getElementById("invested").innerText = formatMoney(totalInvested.toFixed(0));
+  document.getElementById("final").innerText = formatMoney(value.toFixed(0));
   document.getElementById("gain").innerText = formatMoney(gain.toFixed(0));
 }
 
-// Auto-calculate on page load
+// Auto-calc on load
 calculateSIP();
-
