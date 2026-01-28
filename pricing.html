@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SIPWise pricing - Start free, upgrade for advanced features. No lock-in, cancel anytime.">
+    <title>Pricing - SIPWise | Plan your SIP. Predict your future.</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="light">
+    <header>
+        <div class="header-content">
+            <h1>
+                <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+                    <div class="logo">₹</div>
+                    SIPWise
+                </a>
+            </h1>
+            <nav class="main-nav">
+                <a href="index.html">Calculator</a>
+                <a href="pricing.html" class="active">Pricing</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="header-controls">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Simple, Transparent Pricing</h1>
+            <p class="page-subtitle">Start free. Upgrade when you need more power. No lock-in, ever.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- Free Plan -->
+            <div class="pricing-card">
+                <div class="pricing-badge">Always Free</div>
+                <h2 class="pricing-title">Free</h2>
+                <div class="pricing-price">
+                    <span class="price-amount">₹0</span>
+                    <span class="price-period">forever</span>
+                </div>
+                <p class="pricing-description">Perfect for individual investors getting started with SIP planning</p>
+                
+                <ul class="pricing-features">
+                    <li>✅ SIP maturity calculator</li>
+                    <li>✅ Basic returns projection</li>
+                    <li>✅ Yearly & monthly breakdown</li>
+                    <li>✅ Interactive charts</li>
+                    <li>✅ Dark/Light mode</li>
+                    <li>✅ No login required</li>
+                    <li>✅ No ads</li>
+                </ul>
+                
+                <a href="index.html" class="btn btn-secondary pricing-btn">Start Free</a>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="pricing-card pricing-card-featured">
+                <div class="pricing-badge pricing-badge-popular">Most Popular</div>
+                <h2 class="pricing-title">Pro</h2>
+                <div class="pricing-price">
+                    <span class="price-amount">₹99</span>
+                    <span class="price-period">/ month</span>
+                </div>
+                <div class="pricing-annual">or ₹999/year (save 17%)</div>
+                <p class="pricing-description">Advanced features for serious investors and financial planning enthusiasts</p>
+                
+                <ul class="pricing-features">
+                    <li>✅ Everything in Free</li>
+                    <li>✅ Multiple SIP comparisons</li>
+                    <li>✅ Inflation-adjusted returns</li>
+                    <li>✅ Step-up SIP support</li>
+                    <li>✅ Lump sum modeling</li>
+                    <li>✅ Export to PDF</li>
+                    <li>✅ Export to Excel</li>
+                    <li>✅ Save unlimited scenarios</li>
+                    <li>✅ Goal-based planning</li>
+                    <li>✅ Tax calculations (Equity/Debt)</li>
+                    <li>✅ Priority support</li>
+                </ul>
+                
+                <button class="btn btn-primary pricing-btn" onclick="alert('Payment integration coming soon! Email us at hello@sipwise.com to get early access.')">Upgrade to Pro</button>
+            </div>
+
+            <!-- Teams Plan -->
+            <div class="pricing-card">
+                <div class="pricing-badge">Coming Soon</div>
+                <h2 class="pricing-title">Teams</h2>
+                <div class="pricing-price">
+                    <span class="price-amount">Custom</span>
+                    <span class="price-period">pricing</span>
+                </div>
+                <p class="pricing-description">For financial advisors and teams managing multiple client portfolios</p>
+                
+                <ul class="pricing-features">
+                    <li>✅ Everything in Pro</li>
+                    <li>✅ Client profile management</li>
+                    <li>✅ Branded reports with your logo</li>
+                    <li>✅ Bulk calculations</li>
+                    <li>✅ Team collaboration</li>
+                    <li>✅ White-label option</li>
+                    <li>✅ API access</li>
+                    <li>✅ Dedicated account manager</li>
+                    <li>✅ Custom features</li>
+                </ul>
+                
+                <a href="contact.html" class="btn btn-secondary pricing-btn">Contact Sales</a>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="card" style="margin-top: 60px;">
+            <h2 style="text-align: center; margin-bottom: 32px;">Frequently Asked Questions</h2>
+            
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3>Do I need to create an account for the free plan?</h3>
+                    <p>No! The free plan works instantly without any signup. Just open the calculator and start using it.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>Can I cancel my Pro subscription anytime?</h3>
+                    <p>Absolutely. No questions asked. Cancel anytime from your account settings, and you'll still have access until the end of your billing period.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>What payment methods do you accept?</h3>
+                    <p>We accept all major credit/debit cards, UPI, and net banking through secure payment gateways.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>Is there a refund policy?</h3>
+                    <p>Yes! If you're not satisfied within the first 7 days of your Pro subscription, we'll refund you 100%, no questions asked.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>How is the Teams plan priced?</h3>
+                    <p>Teams pricing depends on the number of users, required features, and usage volume. Contact us for a custom quote.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h3>Do you offer discounts for students or educators?</h3>
+                    <p>Yes! We offer 50% off Pro for verified students and educators. Email us at hello@sipwise.com with your institution ID.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="card" style="margin-top: 40px;">
+            <h2 style="text-align: center; margin-bottom: 32px;">Feature Comparison</h2>
+            
+            <div class="comparison-table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Free</th>
+                            <th>Pro</th>
+                            <th>Teams</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Basic SIP Calculator</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Interactive Charts</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Year-wise Breakdown</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Multiple Scenarios</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Step-up SIP</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Inflation Adjustment</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Export to PDF/Excel</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Save Scenarios</td>
+                            <td>❌</td>
+                            <td>Unlimited</td>
+                            <td>Unlimited</td>
+                        </tr>
+                        <tr>
+                            <td>Client Profiles</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>Branded Reports</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>API Access</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                            <td>✅</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Trust Section -->
+        <div class="trust-section">
+            <h2 style="text-align: center; margin-bottom: 32px;">Why Choose SIPWise?</h2>
+            <div class="trust-grid">
+                <div class="trust-item">
+                    <div class="trust-icon">🔒</div>
+                    <h3>Privacy First</h3>
+                    <p>Your data stays in your browser. We don't track or sell your information.</p>
+                </div>
+                
+                <div class="trust-item">
+                    <div class="trust-icon">💯</div>
+                    <h3>No Lock-in</h3>
+                    <p>Cancel anytime. No complicated processes. We're confident you'll love it.</p>
+                </div>
+                
+                <div class="trust-item">
+                    <div class="trust-icon">🇮🇳</div>
+                    <h3>India-Focused</h3>
+                    <p>Tax rules, currency formatting, and assumptions tailored for Indian investors.</p>
+                </div>
+                
+                <div class="trust-item">
+                    <div class="trust-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Instant calculations. No loading spinners. Just results.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>SIPWise</h4>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">Plan your SIP. Predict your future.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Calculator</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                    This tool is for educational purposes only. Please consult a SEBI registered financial advisor before making investment decisions.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 SIPWise. All rights reserved.</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                Last Updated: January 2025
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

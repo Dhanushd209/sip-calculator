@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contact SIPWise - We'd love to hear from you. Send feature requests, bug reports, or partnership ideas.">
+    <title>Contact - SIPWise | Plan your SIP. Predict your future.</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="light">
+    <header>
+        <div class="header-content">
+            <h1>
+                <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+                    <div class="logo">₹</div>
+                    SIPWise
+                </a>
+            </h1>
+            <nav class="main-nav">
+                <a href="index.html">Calculator</a>
+                <a href="pricing.html">Pricing</a>
+                <a href="about.html">About</a>
+                <a href="contact.html" class="active">Contact</a>
+            </nav>
+            <div class="header-controls">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">We'd Love to Hear From You</h1>
+            <p class="page-subtitle">Questions, feedback, or feature requests? We're all ears.</p>
+        </div>
+
+        <div class="contact-grid">
+            <div class="contact-main">
+                <div class="card">
+                    <h2>Send Us a Message</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Fill out the form below and we'll get back to you within 48 hours.</p>
+                    
+                    <form id="contactForm" class="contact-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Name (Optional)</label>
+                                <input type="text" id="name" name="name" placeholder="Your name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category">Category *</label>
+                            <select id="category" name="category" required>
+                                <option value="">Select a category...</option>
+                                <option value="feature">✨ Feature Request</option>
+                                <option value="bug">🐛 Bug Report</option>
+                                <option value="partnership">🤝 Partnership Inquiry</option>
+                                <option value="support">💬 General Support</option>
+                                <option value="feedback">📣 Feedback</option>
+                                <option value="other">📌 Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">Subject *</label>
+                            <input type="text" id="subject" name="subject" placeholder="Brief description of your message" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Message *</label>
+                            <textarea id="message" name="message" rows="8" placeholder="Tell us more..." required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                    </form>
+
+                    <div id="formSuccess" class="form-message form-success" style="display: none;">
+                        <strong>✅ Message sent successfully!</strong>
+                        <p>Thank you for reaching out. We'll respond within 48 hours.</p>
+                    </div>
+
+                    <div id="formError" class="form-message form-error" style="display: none;">
+                        <strong>❌ Oops! Something went wrong.</strong>
+                        <p>Please try again or email us directly at hello@sipwise.com</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <h2>Frequently Asked Questions</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">Before reaching out, check if your question is already answered:</p>
+                    
+                    <div class="faq-list">
+                        <div class="faq-item-contact">
+                            <h3>How do I upgrade to Pro?</h3>
+                            <p>Visit our <a href="pricing.html">Pricing page</a> and click "Upgrade to Pro". Follow the payment process and you'll have instant access to all Pro features.</p>
+                        </div>
+                        
+                        <div class="faq-item-contact">
+                            <h3>Can I request a custom feature for my team?</h3>
+                            <p>Absolutely! Select "Partnership Inquiry" in the form above and describe your requirements. We offer custom solutions for teams and advisors.</p>
+                        </div>
+                        
+                        <div class="faq-item-contact">
+                            <h3>How do I report a bug?</h3>
+                            <p>Select "Bug Report" in the form and include as much detail as possible: what you were doing, what happened vs. what you expected, and your device/browser info.</p>
+                        </div>
+                        
+                        <div class="faq-item-contact">
+                            <h3>Do you offer refunds?</h3>
+                            <p>Yes! We offer a 7-day money-back guarantee for Pro subscriptions. No questions asked. Just email us at hello@sipwise.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-sidebar">
+                <div class="card sticky-card">
+                    <h3>Direct Contact</h3>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">📧</div>
+                        <div>
+                            <h4>Email</h4>
+                            <a href="mailto:hello@sipwise.com">hello@sipwise.com</a>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Response time: 24-48 hours</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">🐛</div>
+                        <div>
+                            <h4>Bug Reports</h4>
+                            <a href="mailto:support@sipwise.com">support@sipwise.com</a>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Priority support for Pro users</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">🔒</div>
+                        <div>
+                            <h4>Privacy Concerns</h4>
+                            <a href="mailto:privacy@sipwise.com">privacy@sipwise.com</a>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Data privacy inquiries</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">💼</div>
+                        <div>
+                            <h4>Business Inquiries</h4>
+                            <a href="mailto:business@sipwise.com">business@sipwise.com</a>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Partnerships & collaborations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Office Hours</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary);">
+                        We're a small team dedicated to building the best SIP calculator. We respond to all messages within 48 hours during business days.
+                    </p>
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                        <p><strong>Monday - Friday</strong></p>
+                        <p style="font-size: 14px; color: var(--text-secondary);">9:00 AM - 6:00 PM IST</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Social Media</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">Follow us for updates and tips:</p>
+                    
+                    <div class="social-links">
+                        <a href="#" class="social-link">
+                            <span>🐦</span>
+                            <span>Twitter</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span>💼</span>
+                            <span>LinkedIn</span>
+                        </a>
+                        <a href="#" class="social-link">
+                            <span>📘</span>
+                            <span>Facebook</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 40px;">
+            <h2 style="text-align: center; margin-bottom: 24px;">What Our Users Say</h2>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial">
+                    <p>"Quick response to my feature request. The team actually listens to users!"</p>
+                    <div class="testimonial-author">
+                        <strong>Rajesh Kumar</strong>
+                        <span>Pro User</span>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <p>"Reported a bug and it was fixed within 24 hours. Impressive support!"</p>
+                    <div class="testimonial-author">
+                        <strong>Priya Sharma</strong>
+                        <span>Free User</span>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <p>"Partnership inquiry was handled professionally. Great team to work with."</p>
+                    <div class="testimonial-author">
+                        <strong>Amit Patel</strong>
+                        <span>Financial Advisor</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>SIPWise</h4>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">Plan your SIP. Predict your future.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Calculator</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                    This tool is for educational purposes only. Please consult a SEBI registered financial advisor before making investment decisions.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 SIPWise. All rights reserved.</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                Last Updated: January 2025
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Contact form handling
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                category: document.getElementById('category').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value
+            };
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            // Simulate form submission (replace with actual API call)
+            setTimeout(() => {
+                // Show success message
+                document.getElementById('formSuccess').style.display = 'block';
+                document.getElementById('formError').style.display = 'none';
+                
+                // Reset form
+                this.reset();
+                submitBtn.textContent = 'Send Message';
+                submitBtn.disabled = false;
+                
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    document.getElementById('formSuccess').style.display = 'none';
+                }, 5000);
+                
+                // In production, replace with actual API call:
+                // fetch('/api/contact', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify(formData)
+                // })
+                // .then(response => response.json())
+                // .then(data => { /* handle success */ })
+                // .catch(error => { /* handle error */ });
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
