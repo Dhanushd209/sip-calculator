@@ -57,10 +57,8 @@ const fundDatabase = [
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Add first fund by default in manual mode
-    if (currentMode === 'manual') {
-        addFund();
-    }
+    // Portfolio analyzer is ready
+    // Users will click "Add Fund" to start
 });
 
 // ==========================================
@@ -100,6 +98,13 @@ function addFund() {
     }
     
     fundCounter++;
+    
+    // Hide empty state message
+    const emptyState = document.getElementById('fundListEmpty');
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+    
     const fundList = document.getElementById('fundList');
     
     const fundItem = document.createElement('div');
@@ -114,7 +119,7 @@ function addFund() {
         <div class="fund-search">
             <input type="text" 
                    id="search-${fundCounter}" 
-                   placeholder="Search fund name..."
+                   placeholder="🔍 Search fund name (e.g., HDFC, Axis, SBI)..."
                    onkeyup="searchFunds(${fundCounter})"
                    onfocus="searchFunds(${fundCounter})">
             <div class="fund-suggestions" id="suggestions-${fundCounter}" style="display: none;"></div>
@@ -141,6 +146,16 @@ function removeFund(id) {
     const fundItem = document.getElementById(`fund-${id}`);
     fundItem.remove();
     fundCounter--;
+    
+    // Show empty state if no funds left
+    const fundList = document.getElementById('fundList');
+    const remainingFunds = fundList.querySelectorAll('.fund-item');
+    if (remainingFunds.length === 0) {
+        const emptyState = document.getElementById('fundListEmpty');
+        if (emptyState) {
+            emptyState.style.display = 'block';
+        }
+    }
 }
 
 function searchFunds(fundId) {

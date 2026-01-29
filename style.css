@@ -1392,11 +1392,27 @@ footer {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    /* New page responsive */
-    .main-nav {
-        display: none;
+    /* Navigation on mobile */
+    .header-content {
+        flex-wrap: wrap;
     }
 
+    .main-nav {
+        width: 100%;
+        order: 3;
+        margin-top: 12px;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .main-nav a {
+        white-space: nowrap;
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    /* New page responsive */
     .about-grid,
     .privacy-grid,
     .contact-grid {
