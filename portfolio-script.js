@@ -748,50 +748,50 @@ function formatNumber(num) {
     return Math.round(num).toLocaleString('en-IN');
 }
 
-// Comprehensive Mutual Fund Database (Illustrative)
-const fundDatabase = [
-    // Large Cap Equity
-    { id: 1, name: "HDFC Top 100 Fund", amc: "HDFC", category: "Large Cap", cagr1y: 18.5, cagr3y: 15.2, cagr5y: 14.8, expense: 1.05, risk: "Medium", aum: 25000, exitLoad: 1.0, manager: "Chirag Setalvad", nfo: false },
-    { id: 2, name: "ICICI Prudential Bluechip Fund", amc: "ICICI", category: "Large Cap", cagr1y: 17.2, cagr3y: 14.8, cagr5y: 13.9, expense: 1.05, risk: "Medium", aum: 35000, exitLoad: 1.0, manager: "Sankaran Naren", nfo: false },
-    { id: 3, name: "Axis Bluechip Fund", amc: "Axis", category: "Large Cap", cagr1y: 19.1, cagr3y: 16.5, cagr5y: 15.2, expense: 0.48, risk: "Medium", aum: 28000, exitLoad: 1.0, manager: "Shreyash Devalkar", nfo: false },
-    { id: 4, name: "SBI Bluechip Fund", amc: "SBI", category: "Large Cap", cagr1y: 16.8, cagr3y: 14.2, cagr5y: 13.5, expense: 0.71, risk: "Medium", aum: 32000, exitLoad: 1.0, manager: "R. Srinivasan", nfo: false },
+// // Comprehensive Mutual Fund Database (Illustrative)
+// const fundDatabase = [
+//     // Large Cap Equity
+//     { id: 1, name: "HDFC Top 100 Fund", amc: "HDFC", category: "Large Cap", cagr1y: 18.5, cagr3y: 15.2, cagr5y: 14.8, expense: 1.05, risk: "Medium", aum: 25000, exitLoad: 1.0, manager: "Chirag Setalvad", nfo: false },
+//     { id: 2, name: "ICICI Prudential Bluechip Fund", amc: "ICICI", category: "Large Cap", cagr1y: 17.2, cagr3y: 14.8, cagr5y: 13.9, expense: 1.05, risk: "Medium", aum: 35000, exitLoad: 1.0, manager: "Sankaran Naren", nfo: false },
+//     { id: 3, name: "Axis Bluechip Fund", amc: "Axis", category: "Large Cap", cagr1y: 19.1, cagr3y: 16.5, cagr5y: 15.2, expense: 0.48, risk: "Medium", aum: 28000, exitLoad: 1.0, manager: "Shreyash Devalkar", nfo: false },
+//     { id: 4, name: "SBI Bluechip Fund", amc: "SBI", category: "Large Cap", cagr1y: 16.8, cagr3y: 14.2, cagr5y: 13.5, expense: 0.71, risk: "Medium", aum: 32000, exitLoad: 1.0, manager: "R. Srinivasan", nfo: false },
     
-    // Mid Cap Equity
-    { id: 5, name: "Kotak Emerging Equity Fund", amc: "Kotak", category: "Mid Cap", cagr1y: 22.5, cagr3y: 18.9, cagr5y: 17.2, expense: 0.54, risk: "High", aum: 18000, exitLoad: 1.0, manager: "Pankaj Tibrewal", nfo: false },
-    { id: 6, name: "DSP Midcap Fund", amc: "DSP", category: "Mid Cap", cagr1y: 21.8, cagr3y: 17.5, cagr5y: 16.8, expense: 0.82, risk: "High", aum: 12000, exitLoad: 1.0, manager: "Vinit Sambre", nfo: false },
-    { id: 7, name: "HDFC Mid-Cap Opportunities Fund", amc: "HDFC", category: "Mid Cap", cagr1y: 23.2, cagr3y: 19.5, cagr5y: 18.1, expense: 1.17, risk: "High", aum: 42000, exitLoad: 1.0, manager: "Chirag Setalvad", nfo: false },
+//     // Mid Cap Equity
+//     { id: 5, name: "Kotak Emerging Equity Fund", amc: "Kotak", category: "Mid Cap", cagr1y: 22.5, cagr3y: 18.9, cagr5y: 17.2, expense: 0.54, risk: "High", aum: 18000, exitLoad: 1.0, manager: "Pankaj Tibrewal", nfo: false },
+//     { id: 6, name: "DSP Midcap Fund", amc: "DSP", category: "Mid Cap", cagr1y: 21.8, cagr3y: 17.5, cagr5y: 16.8, expense: 0.82, risk: "High", aum: 12000, exitLoad: 1.0, manager: "Vinit Sambre", nfo: false },
+//     { id: 7, name: "HDFC Mid-Cap Opportunities Fund", amc: "HDFC", category: "Mid Cap", cagr1y: 23.2, cagr3y: 19.5, cagr5y: 18.1, expense: 1.17, risk: "High", aum: 42000, exitLoad: 1.0, manager: "Chirag Setalvad", nfo: false },
     
-    // Small Cap Equity
-    { id: 8, name: "Axis Small Cap Fund", amc: "Axis", category: "Small Cap", cagr1y: 28.5, cagr3y: 24.2, cagr5y: 22.5, expense: 0.63, risk: "Very High", aum: 8500, exitLoad: 1.0, manager: "Anupam Tiwari", nfo: false },
-    { id: 9, name: "SBI Small Cap Fund", amc: "SBI", category: "Small Cap", cagr1y: 26.8, cagr3y: 22.5, cagr5y: 21.2, expense: 0.89, risk: "Very High", aum: 7200, exitLoad: 1.0, manager: "R. Srinivasan", nfo: false },
+//     // Small Cap Equity
+//     { id: 8, name: "Axis Small Cap Fund", amc: "Axis", category: "Small Cap", cagr1y: 28.5, cagr3y: 24.2, cagr5y: 22.5, expense: 0.63, risk: "Very High", aum: 8500, exitLoad: 1.0, manager: "Anupam Tiwari", nfo: false },
+//     { id: 9, name: "SBI Small Cap Fund", amc: "SBI", category: "Small Cap", cagr1y: 26.8, cagr3y: 22.5, cagr5y: 21.2, expense: 0.89, risk: "Very High", aum: 7200, exitLoad: 1.0, manager: "R. Srinivasan", nfo: false },
     
-    // Flexi Cap / Multi Cap
-    { id: 10, name: "Parag Parikh Flexi Cap Fund", amc: "PPFAS", category: "Flexi Cap", cagr1y: 20.5, cagr3y: 17.8, cagr5y: 16.5, expense: 0.82, risk: "Medium-High", aum: 45000, exitLoad: 2.0, manager: "Rajeev Thakkar", nfo: false },
-    { id: 11, name: "Canara Robeco Flexi Cap Fund", amc: "Canara Robeco", category: "Flexi Cap", cagr1y: 19.2, cagr3y: 16.5, cagr5y: 15.8, expense: 0.95, risk: "Medium-High", aum: 15000, exitLoad: 1.0, manager: "Shridatta Bhandwaldar", nfo: false },
+//     // Flexi Cap / Multi Cap
+//     { id: 10, name: "Parag Parikh Flexi Cap Fund", amc: "PPFAS", category: "Flexi Cap", cagr1y: 20.5, cagr3y: 17.8, cagr5y: 16.5, expense: 0.82, risk: "Medium-High", aum: 45000, exitLoad: 2.0, manager: "Rajeev Thakkar", nfo: false },
+//     { id: 11, name: "Canara Robeco Flexi Cap Fund", amc: "Canara Robeco", category: "Flexi Cap", cagr1y: 19.2, cagr3y: 16.5, cagr5y: 15.8, expense: 0.95, risk: "Medium-High", aum: 15000, exitLoad: 1.0, manager: "Shridatta Bhandwaldar", nfo: false },
     
-    // ELSS (Tax Saving)
-    { id: 12, name: "Axis Long Term Equity Fund", amc: "Axis", category: "ELSS", cagr1y: 21.2, cagr3y: 18.5, cagr5y: 17.2, expense: 0.68, risk: "High", aum: 25000, exitLoad: 0.0, manager: "Jinesh Gopani", nfo: false },
-    { id: 13, name: "Mirae Asset Tax Saver Fund", amc: "Mirae", category: "ELSS", cagr1y: 22.5, cagr3y: 19.2, cagr5y: 18.5, expense: 0.75, risk: "High", aum: 18000, exitLoad: 0.0, manager: "Neelesh Surana", nfo: false },
-    { id: 14, name: "Quant ELSS Tax Saver Fund", amc: "Quant", category: "ELSS", cagr1y: 25.8, cagr3y: 22.5, cagr5y: 21.2, expense: 0.62, risk: "Very High", aum: 5500, exitLoad: 0.0, manager: "Sanjeev Sharma", nfo: false },
+//     // ELSS (Tax Saving)
+//     { id: 12, name: "Axis Long Term Equity Fund", amc: "Axis", category: "ELSS", cagr1y: 21.2, cagr3y: 18.5, cagr5y: 17.2, expense: 0.68, risk: "High", aum: 25000, exitLoad: 0.0, manager: "Jinesh Gopani", nfo: false },
+//     { id: 13, name: "Mirae Asset Tax Saver Fund", amc: "Mirae", category: "ELSS", cagr1y: 22.5, cagr3y: 19.2, cagr5y: 18.5, expense: 0.75, risk: "High", aum: 18000, exitLoad: 0.0, manager: "Neelesh Surana", nfo: false },
+//     { id: 14, name: "Quant ELSS Tax Saver Fund", amc: "Quant", category: "ELSS", cagr1y: 25.8, cagr3y: 22.5, cagr5y: 21.2, expense: 0.62, risk: "Very High", aum: 5500, exitLoad: 0.0, manager: "Sanjeev Sharma", nfo: false },
     
-    // Debt Funds
-    { id: 15, name: "ICICI Prudential Corporate Bond Fund", amc: "ICICI", category: "Debt", cagr1y: 7.2, cagr3y: 6.8, cagr5y: 7.5, expense: 0.42, risk: "Low", aum: 15000, exitLoad: 1.0, manager: "Manish Banthia", nfo: false },
-    { id: 16, name: "HDFC Corporate Bond Fund", amc: "HDFC", category: "Debt", cagr1y: 7.5, cagr3y: 7.2, cagr5y: 7.8, expense: 0.38, risk: "Low", aum: 18000, exitLoad: 1.0, manager: "Anil Bamboli", nfo: false },
-    { id: 17, name: "Axis Banking & PSU Debt Fund", amc: "Axis", category: "Debt", cagr1y: 7.8, cagr3y: 7.5, cagr5y: 8.2, expense: 0.35, risk: "Low", aum: 12000, exitLoad: 0.25, manager: "Devang Shah", nfo: false },
+//     // Debt Funds
+//     { id: 15, name: "ICICI Prudential Corporate Bond Fund", amc: "ICICI", category: "Debt", cagr1y: 7.2, cagr3y: 6.8, cagr5y: 7.5, expense: 0.42, risk: "Low", aum: 15000, exitLoad: 1.0, manager: "Manish Banthia", nfo: false },
+//     { id: 16, name: "HDFC Corporate Bond Fund", amc: "HDFC", category: "Debt", cagr1y: 7.5, cagr3y: 7.2, cagr5y: 7.8, expense: 0.38, risk: "Low", aum: 18000, exitLoad: 1.0, manager: "Anil Bamboli", nfo: false },
+//     { id: 17, name: "Axis Banking & PSU Debt Fund", amc: "Axis", category: "Debt", cagr1y: 7.8, cagr3y: 7.5, cagr5y: 8.2, expense: 0.35, risk: "Low", aum: 12000, exitLoad: 0.25, manager: "Devang Shah", nfo: false },
     
-    // Hybrid Funds
-    { id: 18, name: "ICICI Prudential Equity & Debt Fund", amc: "ICICI", category: "Hybrid", cagr1y: 14.5, cagr3y: 12.8, cagr5y: 11.5, expense: 1.25, risk: "Medium", aum: 22000, exitLoad: 1.0, manager: "Manish Banthia", nfo: false },
-    { id: 19, name: "HDFC Balanced Advantage Fund", amc: "HDFC", category: "Hybrid", cagr1y: 13.8, cagr3y: 11.5, cagr5y: 10.8, expense: 1.05, risk: "Medium", aum: 50000, exitLoad: 1.0, manager: "Prashant Jain", nfo: false },
-    { id: 20, name: "SBI Equity Hybrid Fund", amc: "SBI", category: "Hybrid", cagr1y: 15.2, cagr3y: 13.5, cagr5y: 12.2, expense: 0.95, risk: "Medium", aum: 28000, exitLoad: 1.0, manager: "Dinesh Ahuja", nfo: false },
+//     // Hybrid Funds
+//     { id: 18, name: "ICICI Prudential Equity & Debt Fund", amc: "ICICI", category: "Hybrid", cagr1y: 14.5, cagr3y: 12.8, cagr5y: 11.5, expense: 1.25, risk: "Medium", aum: 22000, exitLoad: 1.0, manager: "Manish Banthia", nfo: false },
+//     { id: 19, name: "HDFC Balanced Advantage Fund", amc: "HDFC", category: "Hybrid", cagr1y: 13.8, cagr3y: 11.5, cagr5y: 10.8, expense: 1.05, risk: "Medium", aum: 50000, exitLoad: 1.0, manager: "Prashant Jain", nfo: false },
+//     { id: 20, name: "SBI Equity Hybrid Fund", amc: "SBI", category: "Hybrid", cagr1y: 15.2, cagr3y: 13.5, cagr5y: 12.2, expense: 0.95, risk: "Medium", aum: 28000, exitLoad: 1.0, manager: "Dinesh Ahuja", nfo: false },
     
-    // Index Funds
-    { id: 21, name: "ICICI Prudential Nifty 50 Index Fund", amc: "ICICI", category: "Index", cagr1y: 16.5, cagr3y: 14.2, cagr5y: 13.8, expense: 0.18, risk: "Medium", aum: 8000, exitLoad: 0.0, manager: "Nishit Patel", nfo: false },
-    { id: 22, name: "UTI Nifty Index Fund", amc: "UTI", category: "Index", cagr1y: 16.2, cagr3y: 14.0, cagr5y: 13.5, expense: 0.20, risk: "Medium", aum: 12000, exitLoad: 0.0, manager: "Sharwan Goyal", nfo: false },
+//     // Index Funds
+//     { id: 21, name: "ICICI Prudential Nifty 50 Index Fund", amc: "ICICI", category: "Index", cagr1y: 16.5, cagr3y: 14.2, cagr5y: 13.8, expense: 0.18, risk: "Medium", aum: 8000, exitLoad: 0.0, manager: "Nishit Patel", nfo: false },
+//     { id: 22, name: "UTI Nifty Index Fund", amc: "UTI", category: "Index", cagr1y: 16.2, cagr3y: 14.0, cagr5y: 13.5, expense: 0.20, risk: "Medium", aum: 12000, exitLoad: 0.0, manager: "Sharwan Goyal", nfo: false },
     
-    // New AMCs / NFOs
-    { id: 23, name: "Jio-BlackRock Innovation Fund", amc: "Jio-BlackRock", category: "Thematic", cagr1y: null, cagr3y: null, cagr5y: null, expense: 0.50, risk: "High", aum: 500, exitLoad: 1.0, manager: "TBA", nfo: true },
-    { id: 24, name: "Jio-BlackRock Nifty 50 Index Fund", amc: "Jio-BlackRock", category: "Index", cagr1y: null, cagr3y: null, cagr5y: null, expense: 0.15, risk: "Medium", aum: 300, exitLoad: 0.0, manager: "TBA", nfo: true },
-];
+//     // New AMCs / NFOs
+//     { id: 23, name: "Jio-BlackRock Innovation Fund", amc: "Jio-BlackRock", category: "Thematic", cagr1y: null, cagr3y: null, cagr5y: null, expense: 0.50, risk: "High", aum: 500, exitLoad: 1.0, manager: "TBA", nfo: true },
+//     { id: 24, name: "Jio-BlackRock Nifty 50 Index Fund", amc: "Jio-BlackRock", category: "Index", cagr1y: null, cagr3y: null, cagr5y: null, expense: 0.15, risk: "Medium", aum: 300, exitLoad: 0.0, manager: "TBA", nfo: true },
+// ];
 
 // ==========================================
 // Initialization
