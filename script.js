@@ -97,10 +97,19 @@ function updateDisplay(id) {
 
 function setMode(mode) {
     currentMode = mode;
-    const buttons = document.querySelectorAll('.toggle-group .toggle-btn');
-    buttons.forEach((btn, idx) => {
-        btn.classList.toggle('active', (mode === 'forward' && idx === 0) || (mode === 'reverse' && idx === 1));
-    });
+    
+    // Update button states - find the parent toggle-group and update buttons
+    const modeToggleGroup = document.querySelector('.form-group .toggle-group');
+    if (modeToggleGroup) {
+        const buttons = modeToggleGroup.querySelectorAll('.toggle-btn');
+        buttons.forEach((btn, idx) => {
+            if ((mode === 'forward' && idx === 0) || (mode === 'reverse' && idx === 1)) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
 
     document.getElementById('sipAmountGroup').style.display = mode === 'forward' ? 'block' : 'none';
     document.getElementById('targetCorpusGroup').style.display = mode === 'reverse' ? 'block' : 'none';
@@ -112,9 +121,13 @@ function setReturn(rate) {
     document.getElementById('returnRate').value = rate;
     document.getElementById('returnRateDisplay').textContent = rate;
     
-    const buttons = document.querySelectorAll('.toggle-group .toggle-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    // Update button states - find the return rate toggle group
+    const returnToggleGroup = document.querySelectorAll('.toggle-group')[1]; // Second toggle group is for returns
+    if (returnToggleGroup) {
+        const buttons = returnToggleGroup.querySelectorAll('.toggle-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
     
     calculate();
 }
@@ -128,16 +141,26 @@ function setGoal(goal) {
 function toggleStepUp() {
     const checkbox = document.getElementById('stepUpEnabled');
     const options = document.getElementById('stepUpOptions');
+    
+    // Toggle checkbox state
     checkbox.checked = !checkbox.checked;
+    
+    // Show/hide options
     options.style.display = checkbox.checked ? 'block' : 'none';
+    
     calculate();
 }
 
 function toggleLumpSum() {
     const checkbox = document.getElementById('lumpSumEnabled');
     const options = document.getElementById('lumpSumOptions');
+    
+    // Toggle checkbox state
     checkbox.checked = !checkbox.checked;
+    
+    // Show/hide options
     options.style.display = checkbox.checked ? 'block' : 'none';
+    
     calculate();
 }
 
@@ -145,9 +168,14 @@ function toggleInflation() {
     const checkbox = document.getElementById('inflationEnabled');
     const options = document.getElementById('inflationOptions');
     const box = document.getElementById('inflationAdjustedBox');
+    
+    // Toggle checkbox state
     checkbox.checked = !checkbox.checked;
+    
+    // Show/hide options and box
     options.style.display = checkbox.checked ? 'block' : 'none';
     box.style.display = checkbox.checked ? 'block' : 'none';
+    
     calculate();
 }
 
@@ -181,7 +209,7 @@ function switchTab(tab) {
 
 function setChartType(type) {
     currentChartType = type;
-    const buttons = document.querySelectorAll('.toggle-group .toggle-btn');
+    const buttons = document.querySelectorAll('.chart-controls .toggle-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
     calculate();
@@ -206,10 +234,14 @@ function calculate() {
     // Reverse calculator mode
     if (currentMode === 'reverse') {
         const targetCorpus = parseFloat(document.getElementById('targetCorpus').value);
-        sipAmount = calculateReverseSIP(targetCorpus, duration, annualReturn, frequency);
+        sipAmount = calculateReverseSIP(targetCorpus, duration, annualReturn, frequency, stepUpRate, stepUpEnabled);
         document.getElementById('sipAmount').value = sipAmount;
         document.getElementById('sipAmountDisplay').textContent = formatCurrency(sipAmount);
-        document.getElementById('sipAmountInput').value = sipAmount;
+        const sipInput = document.getElementById('sipAmountInput');
+        if (sipInput) sipInput.value = sipAmount;
+        
+        // Show suggested SIP message
+        showSuggestedSIPMessage(sipAmount, targetCorpus, duration);
     }
 
     const monthlyRate = annualReturn / 100 / 12;
@@ -271,15 +303,75 @@ function calculate() {
     updateTable(yearlyData);
 }
 
-function calculateReverseSIP(targetCorpus, duration, annualReturn, frequency) {
+function calculateReverseSIP(targetCorpus, duration, annualReturn, frequency, stepUpRate, stepUpEnabled) {
     const monthlyRate = annualReturn / 100 / 12;
     const totalMonths = duration * 12;
     
-    // Using FV formula: FV = P × [(1 + r)^n - 1] / r × (1 + r)
-    const fvFactor = (Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate * (1 + monthlyRate);
-    const monthlySIP = targetCorpus / fvFactor;
+    if (stepUpEnabled && stepUpRate > 0) {
+        // Complex calculation for step-up SIP
+        // Using iterative approach to find the initial SIP amount
+        let lowSIP = 100;
+        let highSIP = targetCorpus / (duration * 12);
+        let tolerance = 10;
+        
+        while (highSIP - lowSIP > tolerance) {
+            let midSIP = (lowSIP + highSIP) / 2;
+            let corpus = 0;
+            let currentSIP = midSIP;
+            
+            for (let year = 1; year <= duration; year++) {
+                if (year > 1) {
+                    currentSIP = currentSIP * (1 + stepUpRate / 100);
+                }
+                for (let month = 0; month < 12; month++) {
+                    corpus = corpus * (1 + monthlyRate) + currentSIP;
+                }
+            }
+            
+            if (corpus < targetCorpus) {
+                lowSIP = midSIP;
+            } else {
+                highSIP = midSIP;
+            }
+        }
+        
+        return Math.round((lowSIP + highSIP) / 2);
+    } else {
+        // Simple FV formula for constant SIP
+        const fvFactor = (Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate * (1 + monthlyRate);
+        const monthlySIP = targetCorpus / fvFactor;
+        return Math.round(monthlySIP);
+    }
+}
+
+function showSuggestedSIPMessage(sipAmount, targetCorpus, duration) {
+    // Create or update suggestion message
+    let messageBox = document.getElementById('reverseSIPSuggestion');
+    if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.id = 'reverseSIPSuggestion';
+        messageBox.className = 'info-box';
+        messageBox.style.marginTop = '16px';
+        
+        const targetGroup = document.getElementById('targetCorpusGroup');
+        targetGroup.parentNode.insertBefore(messageBox, targetGroup.nextSibling);
+    }
     
-    return Math.round(monthlySIP);
+    messageBox.innerHTML = `
+        <strong>💡 Recommended Investment</strong>
+        <div style="margin-top: 8px;">
+            <p style="font-size: 14px; color: var(--text-secondary); margin: 0;">
+                To achieve your goal of <strong style="color: var(--primary);">₹${formatNumber(targetCorpus)}</strong> 
+                in <strong>${duration} years</strong>, you need to invest:
+            </p>
+            <div style="font-size: 24px; font-weight: 700; color: var(--primary); margin-top: 8px; font-family: 'JetBrains Mono', monospace;">
+                ₹${formatNumber(sipAmount)}/month
+            </div>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                This will help you reach your target corpus based on the selected return rate.
+            </p>
+        </div>
+    `;
 }
 
 function calculateTax(gains, corpus) {
