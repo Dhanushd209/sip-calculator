@@ -1,7 +1,366 @@
+// ==========================================
+// MFAPI.in Integration & Fund Database
+// ==========================================
+
+const MFAPI_BASE_URL = 'https://api.mfapi.in/mf';
+
+// Cache for API responses to reduce API calls
+const apiCache = {
+    search: {},
+    navData: {},
+    latest: {}
+};
+
+// Category mapping based on fund name patterns
+const CATEGORY_PATTERNS = {
+    'ELSS': /elss|tax saver|tax saving/i,
+    'Large Cap': /large cap|bluechip|blue chip|top \d+/i,
+    'Mid Cap': /mid cap|midcap/i,
+    'Small Cap': /small cap|smallcap/i,
+    'Flexi Cap': /flexi cap|flexicap|multi cap|multicap/i,
+    'Debt': /debt|bond|income|gilt|liquid|money market|ultra short|short duration|medium duration|dynamic bond/i,
+    'Hybrid': /hybrid|balanced|equity & debt|aggressive|conservative hybrid|dynamic asset/i,
+    'Index': /index|nifty|sensex|etf/i,
+    'Thematic': /thematic|sectoral|pharma|banking|technology|infrastructure|psu|consumption/i,
+    'International': /international|overseas|global|us equity|nasdaq/i
+};
+
+// Risk mapping
+const RISK_MAPPING = {
+    'ELSS': 'High',
+    'Large Cap': 'Medium',
+    'Mid Cap': 'High',
+    'Small Cap': 'Very High',
+    'Flexi Cap': 'Medium-High',
+    'Debt': 'Low',
+    'Hybrid': 'Medium',
+    'Index': 'Medium',
+    'Thematic': 'High',
+    'International': 'Medium-High'
+};
+
+// ==========================================
+// API Helper Functions
+// ==========================================
+
+/**
+ * Search for mutual funds by query
+ */
+async function searchFunds(query) {
+    if (!query || query.length < 2) return [];
+    
+    const cacheKey = query.toLowerCase();
+    if (apiCache.search[cacheKey]) {
+        return apiCache.search[cacheKey];
+    }
+    
+    try {
+        const response = await fetch(`${MFAPI_BASE_URL}/search?q=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Search failed');
+        
+        const results = await response.json();
+        
+        // Filter for Direct-Growth plans only and enrich with category
+        const enrichedResults = results
+            .filter(fund => 
+                fund.schemeName.toLowerCase().includes('direct') && 
+                fund.schemeName.toLowerCase().includes('growth')
+            )
+            .map(fund => ({
+                ...fund,
+                category: detectCategory(fund.schemeName),
+                risk: detectRisk(fund.schemeName)
+            }))
+            .slice(0, 20); // Limit to 20 results
+        
+        apiCache.search[cacheKey] = enrichedResults;
+        return enrichedResults;
+    } catch (error) {
+        console.error('Fund search error:', error);
+        return [];
+    }
+}
+
+/**
+ * Get latest NAV for a fund
+ */
+async function getLatestNAV(schemeCode) {
+    const cacheKey = `${schemeCode}_latest`;
+    if (apiCache.latest[cacheKey]) {
+        const cached = apiCache.latest[cacheKey];
+        // Cache valid for 1 hour
+        if (Date.now() - cached.timestamp < 3600000) {
+            return cached.data;
+        }
+    }
+    
+    try {
+        const response = await fetch(`${MFAPI_BASE_URL}/${schemeCode}/latest`);
+        if (!response.ok) throw new Error('Failed to fetch NAV');
+        
+        const data = await response.json();
+        const result = {
+            schemeName: data.meta.scheme_name,
+            schemeCode: data.meta.scheme_code,
+            nav: parseFloat(data.data[0].nav),
+            date: data.data[0].date
+        };
+        
+        apiCache.latest[cacheKey] = {
+            data: result,
+            timestamp: Date.now()
+        };
+        
+        return result;
+    } catch (error) {
+        console.error('Error fetching latest NAV:', error);
+        return null;
+    }
+}
+
+/**
+ * Get full NAV history for a fund
+ */
+async function getNAVHistory(schemeCode) {
+    const cacheKey = `${schemeCode}_history`;
+    if (apiCache.navData[cacheKey]) {
+        const cached = apiCache.navData[cacheKey];
+        // Cache valid for 24 hours
+        if (Date.now() - cached.timestamp < 86400000) {
+            return cached.data;
+        }
+    }
+    
+    try {
+        const response = await fetch(`${MFAPI_BASE_URL}/${schemeCode}`);
+        if (!response.ok) throw new Error('Failed to fetch NAV history');
+        
+        const result = await response.json();
+        
+        apiCache.navData[cacheKey] = {
+            data: result,
+            timestamp: Date.now()
+        };
+        
+        return result;
+    } catch (error) {
+        console.error('Error fetching NAV history:', error);
+        return null;
+    }
+}
+
+/**
+ * Calculate CAGR between two NAV values
+ */
+function calculateCAGR(startNAV, endNAV, years) {
+    if (!startNAV || !endNAV || years <= 0) return null;
+    return ((Math.pow(endNAV / startNAV, 1 / years) - 1) * 100);
+}
+
+/**
+ * Find NAV closest to a target date
+ */
+function findNAVByDate(navData, targetDate) {
+    if (!navData || navData.length === 0) return null;
+    
+    const target = new Date(targetDate);
+    
+    // NAV data is sorted latest to oldest
+    for (let i = 0; i < navData.length; i++) {
+        const navDate = parseIndianDate(navData[i].date);
+        if (navDate <= target) {
+            return {
+                nav: parseFloat(navData[i].nav),
+                date: navData[i].date
+            };
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Parse Indian date format (DD-MM-YYYY)
+ */
+function parseIndianDate(dateStr) {
+    const [day, month, year] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+/**
+ * Calculate returns (1Y, 3Y, 5Y) for a fund
+ */
+async function calculateReturns(schemeCode) {
+    const historyData = await getNAVHistory(schemeCode);
+    if (!historyData || !historyData.data || historyData.data.length === 0) {
+        return { cagr1y: null, cagr3y: null, cagr5y: null };
+    }
+    
+    const navData = historyData.data;
+    const latestNAV = parseFloat(navData[0].nav);
+    const latestDate = parseIndianDate(navData[0].date);
+    
+    // Calculate target dates
+    const oneYearAgo = new Date(latestDate);
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    
+    const threeYearsAgo = new Date(latestDate);
+    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+    
+    const fiveYearsAgo = new Date(latestDate);
+    fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
+    
+    // Find NAVs
+    const nav1y = findNAVByDate(navData, oneYearAgo);
+    const nav3y = findNAVByDate(navData, threeYearsAgo);
+    const nav5y = findNAVByDate(navData, fiveYearsAgo);
+    
+    return {
+        cagr1y: nav1y ? calculateCAGR(nav1y.nav, latestNAV, 1) : null,
+        cagr3y: nav3y ? calculateCAGR(nav3y.nav, latestNAV, 3) : null,
+        cagr5y: nav5y ? calculateCAGR(nav5y.nav, latestNAV, 5) : null
+    };
+}
+
+/**
+ * Detect fund category from name
+ */
+function detectCategory(fundName) {
+    for (const [category, pattern] of Object.entries(CATEGORY_PATTERNS)) {
+        if (pattern.test(fundName)) {
+            return category;
+        }
+    }
+    return 'Other';
+}
+
+/**
+ * Detect risk level from category
+ */
+function detectRisk(fundName) {
+    const category = detectCategory(fundName);
+    return RISK_MAPPING[category] || 'Medium';
+}
+
+/**
+ * Get fund details with returns
+ */
+async function getFundDetails(schemeCode) {
+    const [latest, returns] = await Promise.all([
+        getLatestNAV(schemeCode),
+        calculateReturns(schemeCode)
+    ]);
+    
+    if (!latest) return null;
+    
+    return {
+        id: schemeCode,
+        schemeCode: schemeCode,
+        name: latest.schemeName,
+        category: detectCategory(latest.schemeName),
+        risk: detectRisk(latest.schemeName),
+        nav: latest.nav,
+        navDate: latest.date,
+        cagr1y: returns.cagr1y,
+        cagr3y: returns.cagr3y,
+        cagr5y: returns.cagr5y,
+        // Estimated values (not from API)
+        expense: estimateExpenseRatio(latest.schemeName),
+        amc: extractAMC(latest.schemeName)
+    };
+}
+
+/**
+ * Extract AMC name from fund name
+ */
+function extractAMC(fundName) {
+    const amcPatterns = {
+        'HDFC': /hdfc/i,
+        'ICICI': /icici/i,
+        'Axis': /axis/i,
+        'SBI': /sbi/i,
+        'Kotak': /kotak/i,
+        'Aditya Birla': /aditya birla|birla sun life/i,
+        'UTI': /uti/i,
+        'DSP': /dsp/i,
+        'Nippon': /nippon/i,
+        'Franklin': /franklin/i,
+        'Mirae': /mirae/i,
+        'PPFAS': /parag parikh|ppfas/i,
+        'Quant': /quant/i,
+        'Motilal': /motilal/i,
+        'Tata': /tata/i,
+        'Invesco': /invesco/i,
+        'LIC': /lic/i,
+        'Canara Robeco': /canara robeco/i,
+        'HSBC': /hsbc/i,
+        'Sundaram': /sundaram/i,
+        'IDFC': /idfc/i,
+        'Baroda': /baroda/i,
+        'BOI': /boi/i,
+        'Edelweiss': /edelweiss/i,
+        'JM Financial': /jm financial/i,
+        'Mahindra': /mahindra/i,
+        'PGIM': /pgim/i,
+        'Principal': /principal/i,
+        'Quantum': /quantum/i,
+        'Sahara': /sahara/i,
+        'Shriram': /shriram/i,
+        'Union': /union/i,
+        'WhiteOak': /whiteoak/i,
+        'Jio-BlackRock': /jio.*blackrock|blackrock.*jio/i,
+        'Zerodha': /zerodha/i,
+        'Groww': /groww/i
+    };
+    
+    for (const [amc, pattern] of Object.entries(amcPatterns)) {
+        if (pattern.test(fundName)) {
+            return amc;
+        }
+    }
+    
+    return 'Other';
+}
+
+/**
+ * Estimate expense ratio based on fund type
+ * (Actual expense ratios not available from MFAPI)
+ */
+function estimateExpenseRatio(fundName) {
+    const category = detectCategory(fundName);
+    const isDirect = fundName.toLowerCase().includes('direct');
+    
+    const baseRatios = {
+        'Index': 0.15,
+        'Debt': 0.35,
+        'ELSS': 0.65,
+        'Large Cap': 0.60,
+        'Mid Cap': 0.75,
+        'Small Cap': 0.85,
+        'Flexi Cap': 0.70,
+        'Hybrid': 0.80,
+        'Thematic': 0.90,
+        'International': 0.95
+    };
+    
+    let ratio = baseRatios[category] || 0.75;
+    
+    // Direct plans typically have 0.5-1% lower expense ratio
+    if (!isDirect) {
+        ratio += 0.75;
+    }
+    
+    return ratio;
+}
+
+// ==========================================
+// Portfolio Management (with API Integration)
+// ==========================================
+
 let currentPMode = 'manual';
 let selectedRisk = 'medium';
 let allocationChart = null;
-let portfolios = []; // Store multiple portfolios
+let portfolios = [];
 let currentPortfolioIndex = 0;
 let currentPortfolio = {
     id: 1,
@@ -9,57 +368,14 @@ let currentPortfolio = {
     funds: []
 };
 
-// Comprehensive Mutual Fund Database (Illustrative)
-const fundDatabase = [
-    // Large Cap Equity
-    { id: 1, name: "HDFC Top 100 Fund", amc: "HDFC", category: "Large Cap", cagr1y: 18.5, cagr3y: 15.2, cagr5y: 14.8, expense: 1.05, risk: "Medium", aum: 25000, exitLoad: 1.0, manager: "Chirag Setalvad", nfo: false },
-    { id: 2, name: "ICICI Prudential Bluechip Fund", amc: "ICICI", category: "Large Cap", cagr1y: 17.2, cagr3y: 14.8, cagr5y: 13.9, expense: 1.05, risk: "Medium", aum: 35000, exitLoad: 1.0, manager: "Sankaran Naren", nfo: false },
-    { id: 3, name: "Axis Bluechip Fund", amc: "Axis", category: "Large Cap", cagr1y: 19.1, cagr3y: 16.5, cagr5y: 15.2, expense: 0.48, risk: "Medium", aum: 28000, exitLoad: 1.0, manager: "Shreyash Devalkar", nfo: false },
-    { id: 4, name: "SBI Bluechip Fund", amc: "SBI", category: "Large Cap", cagr1y: 16.8, cagr3y: 14.2, cagr5y: 13.5, expense: 0.71, risk: "Medium", aum: 32000, exitLoad: 1.0, manager: "R. Srinivasan", nfo: false },
-    
-    // Mid Cap Equity
-    { id: 5, name: "Kotak Emerging Equity Fund", amc: "Kotak", category: "Mid Cap", cagr1y: 22.5, cagr3y: 18.9, cagr5y: 17.2, expense: 0.54, risk: "High", aum: 18000, exitLoad: 1.0, manager: "Pankaj Tibrewal", nfo: false },
-    { id: 6, name: "DSP Midcap Fund", amc: "DSP", category: "Mid Cap", cagr1y: 21.8, cagr3y: 17.5, cagr5y: 16.8, expense: 0.82, risk: "High", aum: 12000, exitLoad: 1.0, manager: "Vinit Sambre", nfo: false },
-    { id: 7, name: "HDFC Mid-Cap Opportunities Fund", amc: "HDFC", category: "Mid Cap", cagr1y: 23.2, cagr3y: 19.5, cagr5y: 18.1, expense: 1.17, risk: "High", aum: 42000, exitLoad: 1.0, manager: "Chirag Setalvad", nfo: false },
-    
-    // Small Cap Equity
-    { id: 8, name: "Axis Small Cap Fund", amc: "Axis", category: "Small Cap", cagr1y: 28.5, cagr3y: 24.2, cagr5y: 22.5, expense: 0.63, risk: "Very High", aum: 8500, exitLoad: 1.0, manager: "Anupam Tiwari", nfo: false },
-    { id: 9, name: "SBI Small Cap Fund", amc: "SBI", category: "Small Cap", cagr1y: 26.8, cagr3y: 22.5, cagr5y: 21.2, expense: 0.89, risk: "Very High", aum: 7200, exitLoad: 1.0, manager: "R. Srinivasan", nfo: false },
-    
-    // Flexi Cap / Multi Cap
-    { id: 10, name: "Parag Parikh Flexi Cap Fund", amc: "PPFAS", category: "Flexi Cap", cagr1y: 20.5, cagr3y: 17.8, cagr5y: 16.5, expense: 0.82, risk: "Medium-High", aum: 45000, exitLoad: 2.0, manager: "Rajeev Thakkar", nfo: false },
-    { id: 11, name: "Canara Robeco Flexi Cap Fund", amc: "Canara Robeco", category: "Flexi Cap", cagr1y: 19.2, cagr3y: 16.5, cagr5y: 15.8, expense: 0.95, risk: "Medium-High", aum: 15000, exitLoad: 1.0, manager: "Shridatta Bhandwaldar", nfo: false },
-    
-    // ELSS (Tax Saving)
-    { id: 12, name: "Axis Long Term Equity Fund", amc: "Axis", category: "ELSS", cagr1y: 21.2, cagr3y: 18.5, cagr5y: 17.2, expense: 0.68, risk: "High", aum: 25000, exitLoad: 0.0, manager: "Jinesh Gopani", nfo: false },
-    { id: 13, name: "Mirae Asset Tax Saver Fund", amc: "Mirae", category: "ELSS", cagr1y: 22.5, cagr3y: 19.2, cagr5y: 18.5, expense: 0.75, risk: "High", aum: 18000, exitLoad: 0.0, manager: "Neelesh Surana", nfo: false },
-    { id: 14, name: "Quant ELSS Tax Saver Fund", amc: "Quant", category: "ELSS", cagr1y: 25.8, cagr3y: 22.5, cagr5y: 21.2, expense: 0.62, risk: "Very High", aum: 5500, exitLoad: 0.0, manager: "Sanjeev Sharma", nfo: false },
-    
-    // Debt Funds
-    { id: 15, name: "ICICI Prudential Corporate Bond Fund", amc: "ICICI", category: "Debt", cagr1y: 7.2, cagr3y: 6.8, cagr5y: 7.5, expense: 0.42, risk: "Low", aum: 15000, exitLoad: 1.0, manager: "Manish Banthia", nfo: false },
-    { id: 16, name: "HDFC Corporate Bond Fund", amc: "HDFC", category: "Debt", cagr1y: 7.5, cagr3y: 7.2, cagr5y: 7.8, expense: 0.38, risk: "Low", aum: 18000, exitLoad: 1.0, manager: "Anil Bamboli", nfo: false },
-    { id: 17, name: "Axis Banking & PSU Debt Fund", amc: "Axis", category: "Debt", cagr1y: 7.8, cagr3y: 7.5, cagr5y: 8.2, expense: 0.35, risk: "Low", aum: 12000, exitLoad: 0.25, manager: "Devang Shah", nfo: false },
-    
-    // Hybrid Funds
-    { id: 18, name: "ICICI Prudential Equity & Debt Fund", amc: "ICICI", category: "Hybrid", cagr1y: 14.5, cagr3y: 12.8, cagr5y: 11.5, expense: 1.25, risk: "Medium", aum: 22000, exitLoad: 1.0, manager: "Manish Banthia", nfo: false },
-    { id: 19, name: "HDFC Balanced Advantage Fund", amc: "HDFC", category: "Hybrid", cagr1y: 13.8, cagr3y: 11.5, cagr5y: 10.8, expense: 1.05, risk: "Medium", aum: 50000, exitLoad: 1.0, manager: "Prashant Jain", nfo: false },
-    { id: 20, name: "SBI Equity Hybrid Fund", amc: "SBI", category: "Hybrid", cagr1y: 15.2, cagr3y: 13.5, cagr5y: 12.2, expense: 0.95, risk: "Medium", aum: 28000, exitLoad: 1.0, manager: "Dinesh Ahuja", nfo: false },
-    
-    // Index Funds
-    { id: 21, name: "ICICI Prudential Nifty 50 Index Fund", amc: "ICICI", category: "Index", cagr1y: 16.5, cagr3y: 14.2, cagr5y: 13.8, expense: 0.18, risk: "Medium", aum: 8000, exitLoad: 0.0, manager: "Nishit Patel", nfo: false },
-    { id: 22, name: "UTI Nifty Index Fund", amc: "UTI", category: "Index", cagr1y: 16.2, cagr3y: 14.0, cagr5y: 13.5, expense: 0.20, risk: "Medium", aum: 12000, exitLoad: 0.0, manager: "Sharwan Goyal", nfo: false },
-    
-    // New AMCs / NFOs
-    { id: 23, name: "Jio-BlackRock Innovation Fund", amc: "Jio-BlackRock", category: "Thematic", cagr1y: null, cagr3y: null, cagr5y: null, expense: 0.50, risk: "High", aum: 500, exitLoad: 1.0, manager: "TBA", nfo: true },
-    { id: 24, name: "Jio-BlackRock Nifty 50 Index Fund", amc: "Jio-BlackRock", category: "Index", cagr1y: null, cagr3y: null, cagr5y: null, expense: 0.15, risk: "Medium", aum: 300, exitLoad: 0.0, manager: "TBA", nfo: true },
-];
+// Loading state tracker
+let isLoadingFunds = false;
 
 // ==========================================
 // Initialization
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize first portfolio
     portfolios.push(currentPortfolio);
     updatePortfolioSelector();
     renderFundsList();
@@ -72,11 +388,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function switchMode(mode) {
     currentPMode = mode;
     
-    // Update button states
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    const buttons = document.querySelectorAll('.mode-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
     event.target.closest('.mode-btn').classList.add('active');
     
-    // Update content visibility
     document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
     document.getElementById(mode + 'Mode').classList.add('active');
 }
@@ -86,7 +401,6 @@ function switchMode(mode) {
 // ==========================================
 
 function updatePortfolioSelector() {
-    // This function can be expanded to show portfolio tabs
     console.log('Current portfolios:', portfolios.length);
 }
 
@@ -148,6 +462,11 @@ function renderFundsList() {
 function createFundCard(fund, index) {
     const card = document.createElement('div');
     card.className = 'fund-item';
+    
+    const returnsDisplay = fund.cagr5y 
+        ? `CAGR: ${fund.cagr5y.toFixed(1)}%` 
+        : (fund.cagr3y ? `3Y: ${fund.cagr3y.toFixed(1)}%` : 'Returns: N/A');
+    
     card.innerHTML = `
         <div class="fund-header">
             <span class="fund-number">Fund ${index + 1}</span>
@@ -157,11 +476,12 @@ function createFundCard(fund, index) {
         <div class="selected-fund">
             <div class="selected-fund-name">${fund.name}</div>
             <div class="selected-fund-meta">
-                <span class="fund-badge ${fund.category.toLowerCase()}">${fund.category}</span>
+                <span class="fund-badge ${fund.category.toLowerCase().replace(' ', '-')}">${fund.category}</span>
                 <span class="fund-badge">${fund.amc}</span>
-                <span class="fund-badge">CAGR: ${fund.cagr5y ? fund.cagr5y.toFixed(1) + '%' : 'N/A'}</span>
-                ${fund.nfo ? '<span class="fund-badge" style="background: #10B981; color: white;">NFO</span>' : ''}
+                <span class="fund-badge">${returnsDisplay}</span>
+                ${fund.isNFO ? '<span class="fund-badge" style="background: #10B981; color: white;">NFO</span>' : ''}
             </div>
+            ${fund.nav ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">NAV: ₹${fund.nav.toFixed(2)} (${fund.navDate})</div>` : ''}
         </div>
         
         <div class="fund-allocation" style="display: grid;">
@@ -201,25 +521,26 @@ function showFundSearchModal() {
         <div class="modal-overlay" onclick="closeFundSearchModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Search & Add Fund</h3>
+                <h3>🔍 Search Mutual Funds</h3>
                 <button onclick="closeFundSearchModal()" class="modal-close">×</button>
             </div>
             <div class="modal-body">
                 <input type="text" 
                        id="fundSearchInput" 
-                       placeholder="🔍 Type fund name, AMC, or category (e.g., HDFC, Axis, Large Cap)..." 
-                       oninput="searchFundsInModal()"
+                       placeholder="Type fund name or AMC (e.g., HDFC, Axis, Parag Parikh)..." 
+                       oninput="debounceSearch()"
                        autofocus>
-                <div id="fundSearchResults" class="fund-search-results"></div>
+                <div id="fundSearchResults" class="fund-search-results">
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                        <div style="font-size: 48px; margin-bottom: 12px;">🔎</div>
+                        <p>Start typing to search for mutual funds</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Only Direct-Growth plans shown</p>
+                    </div>
+                </div>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
-    
-    // Show all funds initially
-    setTimeout(() => {
-        searchFundsInModal('');
-    }, 100);
 }
 
 function closeFundSearchModal() {
@@ -229,62 +550,117 @@ function closeFundSearchModal() {
     }
 }
 
-function searchFundsInModal() {
-    const query = document.getElementById('fundSearchInput').value.toLowerCase();
+// Debounce search to avoid too many API calls
+let searchTimeout;
+function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchFundsInModal();
+    }, 500);
+}
+
+async function searchFundsInModal() {
+    const query = document.getElementById('fundSearchInput').value.trim();
     const resultsDiv = document.getElementById('fundSearchResults');
     
-    let results = fundDatabase;
-    
-    if (query.length > 0) {
-        results = fundDatabase.filter(fund => 
-            fund.name.toLowerCase().includes(query) ||
-            fund.amc.toLowerCase().includes(query) ||
-            fund.category.toLowerCase().includes(query)
-        );
-    }
-    
-    if (results.length === 0) {
-        resultsDiv.innerHTML = '<div class="no-results">No funds found</div>';
+    if (query.length < 2) {
+        resultsDiv.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                <div style="font-size: 48px; margin-bottom: 12px;">🔎</div>
+                <p>Start typing to search for mutual funds</p>
+                <p style="font-size: 12px; margin-top: 8px;">Only Direct-Growth plans shown</p>
+            </div>
+        `;
         return;
     }
     
-    resultsDiv.innerHTML = results.map(fund => `
-        <div class="fund-result-item" onclick="addFundToPortfolio(${fund.id})">
-            <div class="fund-result-name">${fund.name}</div>
-            <div class="fund-result-meta">
-                <span class="fund-badge ${fund.category.toLowerCase()}">${fund.category}</span>
-                <span class="fund-badge">${fund.amc}</span>
-                ${fund.cagr5y ? '<span class="fund-badge">5Y: ' + fund.cagr5y.toFixed(1) + '%</span>' : ''}
-                ${fund.nfo ? '<span class="fund-badge" style="background: #10B981; color: white;">NFO</span>' : ''}
-            </div>
+    resultsDiv.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px;">
+            <div class="loading-spinner" style="margin: 0 auto 16px;"></div>
+            <p style="color: var(--text-secondary);">Searching funds...</p>
         </div>
-    `).join('');
+    `;
+    
+    const results = await searchFunds(query);
+    
+    if (results.length === 0) {
+        resultsDiv.innerHTML = `
+            <div class="no-results">
+                <div style="font-size: 48px; margin-bottom: 12px;">😕</div>
+                <p>No funds found matching "${query}"</p>
+                <p style="font-size: 12px; margin-top: 8px; color: var(--text-secondary);">Try different keywords or AMC names</p>
+            </div>
+        `;
+        return;
+    }
+    
+    resultsDiv.innerHTML = results.map(fund => {
+        const returnsText = fund.cagr5y !== undefined ? 
+            (fund.cagr5y ? `5Y: ${fund.cagr5y.toFixed(1)}%` : 'New Fund') : 
+            '';
+        
+        return `
+            <div class="fund-result-item" onclick="addFundToPortfolioBySchemeCode(${fund.schemeCode})">
+                <div class="fund-result-name">${fund.schemeName}</div>
+                <div class="fund-result-meta">
+                    <span class="fund-badge ${fund.category.toLowerCase().replace(' ', '-')}">${fund.category}</span>
+                    ${returnsText ? '<span class="fund-badge">' + returnsText + '</span>' : ''}
+                    <span class="fund-badge">${fund.risk} Risk</span>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-function addFundToPortfolio(fundId) {
+async function addFundToPortfolioBySchemeCode(schemeCode) {
     if (currentPortfolio.funds.length >= 10) {
         alert('Maximum 10 funds per portfolio');
         return;
     }
     
     // Check if fund already exists
-    if (currentPortfolio.funds.find(f => f.id === fundId)) {
+    if (currentPortfolio.funds.find(f => f.schemeCode === schemeCode)) {
         alert('This fund is already in your portfolio');
         return;
     }
     
-    const fund = fundDatabase.find(f => f.id === fundId);
-    const newFund = {
-        ...fund,
-        sipAmount: 1000,
-        allocation: 10,
-        stepUpEnabled: false,
-        stepUpRate: 10
-    };
+    // Show loading state
+    const modal = document.querySelector('.modal-content');
+    if (modal) {
+        modal.style.opacity = '0.6';
+        modal.style.pointerEvents = 'none';
+    }
     
-    currentPortfolio.funds.push(newFund);
-    renderFundsList();
-    closeFundSearchModal();
+    try {
+        // Fetch fund details with returns
+        const fundDetails = await getFundDetails(schemeCode);
+        
+        if (!fundDetails) {
+            alert('Unable to fetch fund details. Please try again.');
+            return;
+        }
+        
+        const newFund = {
+            ...fundDetails,
+            sipAmount: 1000,
+            allocation: 10,
+            stepUpEnabled: false,
+            stepUpRate: 10,
+            isNFO: !fundDetails.cagr1y && !fundDetails.cagr3y && !fundDetails.cagr5y
+        };
+        
+        currentPortfolio.funds.push(newFund);
+        renderFundsList();
+        closeFundSearchModal();
+    } catch (error) {
+        console.error('Error adding fund:', error);
+        alert('Error adding fund to portfolio. Please try again.');
+    } finally {
+        if (modal) {
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+        }
+    }
 }
 
 function removeFundFromPortfolio(index) {
@@ -318,7 +694,6 @@ function updateFundStepUp(index, value) {
 // ==========================================
 // Value Update Functions
 // ==========================================
-
 
 function toggleEqualSplit() {
     const checkbox = document.getElementById('equalSplit');
@@ -355,6 +730,9 @@ function analyzeManualPortfolio() {
         let corpus = 0;
         let currentSIP = fund.sipAmount;
         
+        // Use calculated returns or fall back to category-based estimates
+        const expectedReturn = fund.cagr5y || fund.cagr3y || getCategoryReturn(fund.category);
+        
         for (let year = 1; year <= tenure; year++) {
             if (fund.stepUpEnabled && year > 1) {
                 currentSIP = currentSIP * (1 + fund.stepUpRate / 100);
@@ -363,7 +741,7 @@ function analyzeManualPortfolio() {
             yearlyInvestment = currentSIP * 12;
             totalInvested += yearlyInvestment;
             
-            const monthlyRate = (fund.cagr5y || fund.cagr3y || 12) / 100 / 12;
+            const monthlyRate = expectedReturn / 100 / 12;
             for (let month = 0; month < 12; month++) {
                 corpus = corpus * (1 + monthlyRate) + currentSIP;
             }
@@ -374,11 +752,31 @@ function analyzeManualPortfolio() {
     });
     
     const totalGains = totalCorpus - totalInvested;
-    const weightedCAGR = currentPortfolio.funds.reduce((sum, f) => 
-        sum + ((f.cagr5y || f.cagr3y || 12) * f.allocation / 100), 0
-    );
+    const weightedCAGR = currentPortfolio.funds.reduce((sum, f) => {
+        const returnRate = f.cagr5y || f.cagr3y || getCategoryReturn(f.category);
+        return sum + (returnRate * f.allocation / 100);
+    }, 0);
     
     displayManualResults(totalInvested, totalCorpus, totalGains, weightedCAGR, tenure);
+}
+
+/**
+ * Get estimated return based on category
+ */
+function getCategoryReturn(category) {
+    const categoryReturns = {
+        'Large Cap': 12,
+        'Mid Cap': 15,
+        'Small Cap': 18,
+        'Flexi Cap': 13,
+        'ELSS': 13,
+        'Debt': 7,
+        'Hybrid': 10,
+        'Index': 11,
+        'Thematic': 14,
+        'International': 12
+    };
+    return categoryReturns[category] || 12;
 }
 
 function displayManualResults(totalInvested, totalCorpus, totalGains, weightedCAGR, tenure) {
@@ -413,6 +811,15 @@ function displayManualResults(totalInvested, totalCorpus, totalGains, weightedCA
         <div class="allocation-chart">
             <canvas id="allocationChart"></canvas>
         </div>
+        
+        <div class="info-box" style="margin-top: 16px; background: #FEF3C7; color: #92400E; border-left-color: #F59E0B;">
+            <strong>📊 Data Source & Disclaimer</strong>
+            <p style="margin-top: 8px; font-size: 13px;">
+                NAV data sourced from MFAPI.in (AMFI data). Returns calculated from historical NAVs. 
+                Mutual fund investments are subject to market risks. Past performance does not guarantee future returns. 
+                Please consult a SEBI registered financial advisor before making investment decisions.
+            </p>
+        </div>
     `;
     
     createAllocationChart(currentPortfolio.funds);
@@ -424,23 +831,29 @@ function displayManualResults(totalInvested, totalCorpus, totalGains, weightedCA
                     <th>Fund Name</th>
                     <th>Category</th>
                     <th>Monthly SIP</th>
+                    <th>Returns (CAGR)</th>
                     <th>Step-up</th>
                     <th>Future Value</th>
                 </tr>
             </thead>
             <tbody>
-                ${currentPortfolio.funds.map(fund => `
-                    <tr>
-                        <td>
-                            <div class="fund-name-cell">${fund.name}</div>
-                            <div class="fund-category-cell">${fund.amc}</div>
-                        </td>
-                        <td><span class="fund-badge ${fund.category.toLowerCase()}">${fund.category}</span></td>
-                        <td>₹${formatNumber(fund.sipAmount)}</td>
-                        <td>${fund.stepUpEnabled ? fund.stepUpRate + '%' : 'No'}</td>
-                        <td>₹${formatNumber(fund.futureValue)}</td>
-                    </tr>
-                `).join('')}
+                ${currentPortfolio.funds.map(fund => {
+                    const returns = fund.cagr5y ? `${fund.cagr5y.toFixed(1)}% (5Y)` : 
+                                   (fund.cagr3y ? `${fund.cagr3y.toFixed(1)}% (3Y)` : 'Est.');
+                    return `
+                        <tr>
+                            <td>
+                                <div class="fund-name-cell">${fund.name}</div>
+                                <div class="fund-category-cell">${fund.amc} • NAV: ₹${fund.nav ? fund.nav.toFixed(2) : 'N/A'}</div>
+                            </td>
+                            <td><span class="fund-badge ${fund.category.toLowerCase().replace(' ', '-')}">${fund.category}</span></td>
+                            <td>₹${formatNumber(fund.sipAmount)}</td>
+                            <td>${returns}</td>
+                            <td>${fund.stepUpEnabled ? fund.stepUpRate + '%' : 'No'}</td>
+                            <td>₹${formatNumber(fund.futureValue)}</td>
+                        </tr>
+                    `;
+                }).join('')}
             </tbody>
         </table>
     `;
@@ -468,7 +881,7 @@ function toggleNFO() {
     checkbox.checked = !checkbox.checked;
 }
 
-function generateAutoPortfolio() {
+async function generateAutoPortfolio() {
     const budget = parseFloat(document.getElementById('autoBudget').value);
     const tenure = parseInt(document.getElementById('autoTenure').value);
     const expectedReturn = parseFloat(document.getElementById('autoExpectedReturn').value);
@@ -476,34 +889,61 @@ function generateAutoPortfolio() {
     const includeTax = document.getElementById('taxSaving').checked;
     const includeNFO = document.getElementById('includeNFO').checked;
     
-    const portfolio = createDiversifiedPortfolio(budget, selectedRisk, style, includeTax, includeNFO);
+    // Show loading
+    const resultsDiv = document.getElementById('autoPortfolioResults');
+    resultsDiv.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+            <div class="loading-spinner" style="margin: 0 auto 16px;"></div>
+            <h3 style="color: var(--text);">Generating Portfolio...</h3>
+            <p style="color: var(--text-secondary); margin-top: 8px;">Analyzing funds based on your preferences</p>
+        </div>
+    `;
+    
+    const portfolio = await createDiversifiedPortfolio(budget, selectedRisk, style, includeTax, includeNFO);
+    
+    if (!portfolio || portfolio.length === 0) {
+        resultsDiv.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <h3>Unable to Generate Portfolio</h3>
+                <p>Please try again or adjust your preferences</p>
+            </div>
+        `;
+        return;
+    }
     
     const totalInvested = budget * 12 * tenure;
     let totalCorpus = 0;
     
     portfolio.forEach(fund => {
-        const monthlyRate = (fund.cagr5y || fund.cagr3y || expectedReturn) / 100 / 12;
+        const returnRate = fund.cagr5y || fund.cagr3y || expectedReturn;
+        const monthlyRate = returnRate / 100 / 12;
         const months = tenure * 12;
         const fv = fund.sipAmount * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate);
         fund.futureValue = fv;
         totalCorpus += fv;
     });
     
-    const weightedCAGR = portfolio.reduce((sum, f) => sum + ((f.cagr5y || f.cagr3y || expectedReturn) * f.allocation / 100), 0);
+    const weightedCAGR = portfolio.reduce((sum, f) => {
+        const returnRate = f.cagr5y || f.cagr3y || expectedReturn;
+        return sum + (returnRate * f.allocation / 100);
+    }, 0);
     
     displayAutoResults(portfolio, totalInvested, totalCorpus, weightedCAGR, tenure, selectedRisk);
 }
 
-
 function getRoleDescription(category) {
     const roles = {
-        debt: 'Stability & Capital Protection',
-        hybrid: 'Balanced Growth & Stability',
-        largeCap: 'Stable Growth',
-        midCap: 'High Growth Potential',
-        smallCap: 'Aggressive Growth',
-        flexiCap: 'Diversified Exposure',
-        elss: 'Tax Saving & Growth'
+        'Debt': 'Stability & Capital Protection',
+        'Hybrid': 'Balanced Growth & Stability',
+        'Large Cap': 'Stable Growth',
+        'Mid Cap': 'High Growth Potential',
+        'Small Cap': 'Aggressive Growth',
+        'Flexi Cap': 'Diversified Exposure',
+        'ELSS': 'Tax Saving & Growth',
+        'Index': 'Market Returns',
+        'Thematic': 'Sector-Focused Growth',
+        'International': 'Global Diversification'
     };
     return roles[category] || 'Diversification';
 }
@@ -552,20 +992,33 @@ function displayAutoResults(portfolio, totalInvested, totalCorpus, weightedCAGR,
                 </tr>
             </thead>
             <tbody>
-                ${portfolio.map(fund => `
-                    <tr>
-                        <td>
-                            <div class="fund-name-cell">${fund.name}</div>
-                            <div class="fund-category-cell">${fund.amc}</div>
-                        </td>
-                        <td><span class="fund-badge ${fund.category.toLowerCase()}">${fund.category}</span></td>
-                        <td>${fund.allocation}%</td>
-                        <td>₹${formatNumber(fund.sipAmount)}</td>
-                        <td>₹${formatNumber(fund.futureValue)}</td>
-                    </tr>
-                `).join('')}
+                ${portfolio.map(fund => {
+                    const returns = fund.cagr5y ? `${fund.cagr5y.toFixed(1)}%` : 
+                                   (fund.cagr3y ? `${fund.cagr3y.toFixed(1)}%` : 'Est.');
+                    return `
+                        <tr>
+                            <td>
+                                <div class="fund-name-cell">${fund.name}</div>
+                                <div class="fund-category-cell">${fund.amc} • Returns: ${returns}</div>
+                            </td>
+                            <td><span class="fund-badge ${fund.category.toLowerCase().replace(' ', '-')}">${fund.category}</span></td>
+                            <td>${fund.allocation}%</td>
+                            <td>₹${formatNumber(fund.sipAmount)}</td>
+                            <td>₹${formatNumber(fund.futureValue)}</td>
+                        </tr>
+                    `;
+                }).join('')}
             </tbody>
         </table>
+        
+        <div class="info-box" style="margin-top: 16px; background: #FEF3C7; color: #92400E; border-left-color: #F59E0B;">
+            <strong>📊 Data Source & Disclaimer</strong>
+            <p style="margin-top: 8px; font-size: 13px;">
+                NAV data sourced from MFAPI.in (AMFI data). Returns calculated from historical NAVs. 
+                Mutual fund investments are subject to market risks. Past performance does not guarantee future returns. 
+                Please consult a SEBI registered financial advisor before making investment decisions.
+            </p>
+        </div>
     `;
     
     createAutoAllocationChart(portfolio);
@@ -577,13 +1030,102 @@ function displayAutoResults(portfolio, totalInvested, totalCorpus, weightedCAGR,
                 <span class="rationale-badge role-${fund.role.includes('Stability') ? 'stability' : fund.role.includes('Growth') ? 'growth' : fund.role.includes('Tax') ? 'tax' : 'hedge'}">${fund.role}</span>
             </div>
             <p>
-                <strong>Why selected:</strong> ${fund.cagr5y ? `Consistent ${fund.cagr5y.toFixed(1)}% CAGR over 5 years` : 'New offering with strong potential'}. 
-                ${fund.expense < 0.75 ? 'Low expense ratio of ' + fund.expense + '%.' : ''} 
+                <strong>Why selected:</strong> ${fund.cagr5y ? `Consistent ${fund.cagr5y.toFixed(1)}% CAGR over 5 years` : 
+                    (fund.cagr3y ? `${fund.cagr3y.toFixed(1)}% CAGR over 3 years` : 'Category-leading performance')}. 
+                ${fund.expense < 0.75 ? 'Low expense ratio of ' + fund.expense.toFixed(2) + '%.' : ''} 
+                ${fund.category === 'Index' ? 'Passive investment for broad market exposure.' : ''}
             </p>
         </div>
     `).join('');
     
     detailedDiv.style.display = 'block';
+}
+
+/**
+ * Create diversified portfolio based on user preferences
+ * Uses actual fund search to populate recommendations
+ */
+async function createDiversifiedPortfolio(budget, risk, style, includeTax, includeNFO) {
+    let portfolio = [];
+    
+    // Define allocation strategy based on risk
+    let allocations = {};
+    
+    if (risk === 'low') {
+        allocations = { 'Debt': 60, 'Hybrid': 25, 'Large Cap': 15 };
+    } else if (risk === 'medium') {
+        allocations = { 'Debt': 30, 'Hybrid': 20, 'Large Cap': 30, 'Mid Cap': 15, 'Index': 5 };
+    } else {
+        allocations = { 'Large Cap': 25, 'Mid Cap': 30, 'Small Cap': 15, 'Flexi Cap': 20, 'Debt': 10 };
+    }
+    
+    // Adjust for style
+    if (style < 33) {
+        allocations['Debt'] = (allocations['Debt'] || 0) + 10;
+        allocations['Small Cap'] = Math.max(0, (allocations['Small Cap'] || 0) - 10);
+    } else if (style > 66) {
+        allocations['Small Cap'] = (allocations['Small Cap'] || 0) + 10;
+        allocations['Debt'] = Math.max(0, (allocations['Debt'] || 0) - 10);
+    }
+    
+    // Add ELSS if requested
+    if (includeTax) {
+        allocations['ELSS'] = 20;
+        allocations['Large Cap'] = Math.max(0, (allocations['Large Cap'] || 0) - 10);
+        allocations['Debt'] = Math.max(0, (allocations['Debt'] || 0) - 10);
+    }
+    
+    // Search and select funds for each category
+    const searchPromises = [];
+    const categorySearchTerms = {
+        'Debt': 'debt fund direct growth',
+        'Hybrid': 'hybrid fund direct growth',
+        'Large Cap': 'large cap direct growth',
+        'Mid Cap': 'mid cap direct growth',
+        'Small Cap': 'small cap direct growth',
+        'Flexi Cap': 'flexi cap direct growth',
+        'ELSS': 'elss direct growth',
+        'Index': 'nifty index direct growth'
+    };
+    
+    for (const [category, allocation] of Object.entries(allocations)) {
+        if (allocation === 0) continue;
+        
+        const searchTerm = categorySearchTerms[category];
+        if (searchTerm) {
+            searchPromises.push(
+                searchFunds(searchTerm).then(results => ({
+                    category,
+                    allocation,
+                    funds: results.filter(f => f.category === category).slice(0, 3)
+                }))
+            );
+        }
+    }
+    
+    const searchResults = await Promise.all(searchPromises);
+    
+    // Build portfolio from search results
+    for (const result of searchResults) {
+        if (result.funds.length > 0) {
+            // Pick first fund (or you could add logic to pick best performer)
+            const selectedFund = result.funds[0];
+            
+            // Fetch full details
+            const fundDetails = await getFundDetails(selectedFund.schemeCode);
+            
+            if (fundDetails) {
+                portfolio.push({
+                    ...fundDetails,
+                    allocation: result.allocation,
+                    sipAmount: Math.round(budget * result.allocation / 100),
+                    role: getRoleDescription(result.category)
+                });
+            }
+        }
+    }
+    
+    return portfolio;
 }
 
 // ==========================================
@@ -604,7 +1146,7 @@ function createAllocationChart(funds) {
     allocationChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: funds.map(f => f.name),
+            labels: funds.map(f => f.name.substring(0, 30) + '...'),
             datasets: [{
                 data: funds.map(f => f.allocation),
                 backgroundColor: [
@@ -628,6 +1170,13 @@ function createAllocationChart(funds) {
                 legend: {
                     position: 'bottom',
                     labels: { color: textColor, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + '%';
+                        }
+                    }
                 }
             }
         }
@@ -648,7 +1197,7 @@ function createAutoAllocationChart(portfolio) {
     allocationChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: portfolio.map(f => f.name),
+            labels: portfolio.map(f => f.name.substring(0, 30) + '...'),
             datasets: [{
                 data: portfolio.map(f => f.allocation),
                 backgroundColor: [
@@ -667,6 +1216,13 @@ function createAutoAllocationChart(portfolio) {
                 legend: {
                     position: 'bottom',
                     labels: { color: textColor, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + '%';
+                        }
+                    }
                 }
             }
         }
@@ -681,250 +1237,26 @@ function formatNumber(num) {
     return Math.round(num).toLocaleString('en-IN');
 }
 
-// ==========================================
-// Mode Switching
-// ==========================================
-
-
-
-// ==========================================
-// Value Update Functions
-// ==========================================
-
 function updatePortfolioValue(id) {
     const slider = document.getElementById(id);
     const display = document.getElementById(id + 'Display');
     display.textContent = slider.value;
 }
 
-// ==========================================
-// MANUAL MODE FUNCTIONS
-// ==========================================
-
-function addFund() {
-    if (fundCounter >= 10) {
-        alert('Maximum 10 funds allowed');
-        return;
-    }
-    
-    fundCounter++;
-    
-    // Hide empty state message
-    const emptyState = document.getElementById('fundListEmpty');
-    if (emptyState) {
-        emptyState.style.display = 'none';
-    }
-    
-    const fundList = document.getElementById('fundList');
-    
-    const fundItem = document.createElement('div');
-    fundItem.className = 'fund-item';
-    fundItem.id = `fund-${fundCounter}`;
-    fundItem.innerHTML = `
-        <div class="fund-header">
-            <span class="fund-number">Fund ${fundCounter}</span>
-            <button class="remove-fund" onclick="removeFund(${fundCounter})">×</button>
-        </div>
-        
-        <div class="fund-search">
-            <input type="text" 
-                   id="search-${fundCounter}" 
-                   placeholder="🔍 Search fund name (e.g., HDFC, Axis, SBI)..."
-                   onkeyup="searchFunds(${fundCounter})"
-                   onfocus="searchFunds(${fundCounter})">
-            <div class="fund-suggestions" id="suggestions-${fundCounter}" style="display: none;"></div>
-        </div>
-        
-        <div id="selected-${fundCounter}" style="display: none;"></div>
-        
-        <div class="fund-allocation" id="allocation-${fundCounter}" style="display: none;">
-            <div class="allocation-input">
-                <label>Monthly SIP (₹)</label>
-                <input type="number" id="amount-${fundCounter}" value="1000" min="100">
-            </div>
-            <div class="allocation-input">
-                <label>Allocation (%)</label>
-                <input type="number" id="percent-${fundCounter}" value="10" min="0" max="100" disabled>
-            </div>
-        </div>
-    `;
-    
-    fundList.appendChild(fundItem);
+// Add loading spinner CSS
+const style = document.createElement('style');
+style.textContent = `
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-function removeFund(id) {
-    const fundItem = document.getElementById(`fund-${id}`);
-    fundItem.remove();
-    fundCounter--;
-    
-    // Show empty state if no funds left
-    const fundList = document.getElementById('fundList');
-    const remainingFunds = fundList.querySelectorAll('.fund-item');
-    if (remainingFunds.length === 0) {
-        const emptyState = document.getElementById('fundListEmpty');
-        if (emptyState) {
-            emptyState.style.display = 'block';
-        }
-    }
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
-
-function searchFunds(fundId) {
-    const searchInput = document.getElementById(`search-${fundId}`);
-    const query = searchInput.value.toLowerCase();
-    const suggestionsDiv = document.getElementById(`suggestions-${fundId}`);
-    
-    if (query.length < 2) {
-        suggestionsDiv.style.display = 'none';
-        return;
-    }
-    
-    const matches = fundDatabase.filter(fund => 
-        fund.name.toLowerCase().includes(query) || 
-        fund.amc.toLowerCase().includes(query)
-    ).slice(0, 5);
-    
-    if (matches.length === 0) {
-        suggestionsDiv.style.display = 'none';
-        return;
-    }
-    
-    suggestionsDiv.innerHTML = matches.map(fund => `
-        <div class="fund-suggestion" onclick="selectFund(${fundId}, ${fund.id})">
-            <div class="fund-suggestion-name">${fund.name}</div>
-            <div class="fund-suggestion-meta">${fund.amc} • ${fund.category} ${fund.nfo ? '• NFO' : ''}</div>
-        </div>
-    `).join('');
-    
-    suggestionsDiv.style.display = 'block';
-}
-
-function selectFund(fundId, dbId) {
-    const fund = fundDatabase.find(f => f.id === dbId);
-    const suggestionsDiv = document.getElementById(`suggestions-${fundId}`);
-    const selectedDiv = document.getElementById(`selected-${fundId}`);
-    const allocationDiv = document.getElementById(`allocation-${fundId}`);
-    const searchInput = document.getElementById(`search-${fundId}`);
-    
-    searchInput.value = '';
-    suggestionsDiv.style.display = 'none';
-    
-    selectedDiv.innerHTML = `
-        <div class="selected-fund">
-            <div class="selected-fund-name">${fund.name}</div>
-            <div class="selected-fund-meta">
-                <span class="fund-badge ${fund.category.toLowerCase()}">${fund.category}</span>
-                <span class="fund-badge">${fund.amc}</span>
-                <span class="fund-badge">Expense: ${fund.expense}%</span>
-                ${fund.nfo ? '<span class="fund-badge" style="background: #10B981; color: white;">NFO</span>' : ''}
-            </div>
-        </div>
-    `;
-    
-    selectedDiv.style.display = 'block';
-    allocationDiv.style.display = 'grid';
-    selectedDiv.dataset.fundId = dbId;
-}
-
-function checkWarnings(funds) {
-    const warnings = [];
-    
-    // Check AMC concentration
-    const amcCount = {};
-    funds.forEach(f => {
-        amcCount[f.amc] = (amcCount[f.amc] || 0) + 1;
-    });
-    
-    const overconcentratedAMCs = Object.entries(amcCount).filter(([amc, count]) => count > 3);
-    if (overconcentratedAMCs.length > 0) {
-        warnings.push(`High concentration in ${overconcentratedAMCs.map(([amc]) => amc).join(', ')} - consider diversifying across AMCs`);
-    }
-    
-    // Check category balance
-    const categories = funds.map(f => f.category);
-    const equityCount = categories.filter(c => c.includes('Cap') || c === 'ELSS' || c === 'Flexi Cap').length;
-    const debtCount = categories.filter(c => c === 'Debt').length;
-    
-    if (debtCount === 0 && equityCount > 0) {
-        warnings.push('No debt funds in portfolio - consider adding for stability');
-    }
-    
-    if (warnings.length === 0) {
-        return '';
-    }
-    
-    return `
-        <div class="warning-box">
-            <strong>⚠️ Portfolio Warnings</strong>
-            <ul class="warning-list">
-                ${warnings.map(w => `<li>${w}</li>`).join('')}
-            </ul>
-        </div>
-    `;
-}
-
-// ==========================================
-// AUTO MODE FUNCTIONS
-// ==========================================
-
-
-function createDiversifiedPortfolio(budget, risk, style, includeTax, includeNFO) {
-    let portfolio = [];
-    let availableFunds = fundDatabase.filter(f => includeNFO || !f.nfo);
-    
-    // Risk-based allocation strategy
-    let allocations = {};
-    
-    if (risk === 'low') {
-        allocations = { debt: 60, hybrid: 25, largeCap: 15 };
-    } else if (risk === 'medium') {
-        allocations = { debt: 30, hybrid: 20, largeCap: 30, midCap: 15, flexiCap: 5 };
-    } else {
-        allocations = { largeCap: 25, midCap: 30, smallCap: 15, flexiCap: 20, debt: 10 };
-    }
-    
-    // Adjust for investment style (stability vs growth)
-    if (style < 33) { // More stability
-        allocations.debt = (allocations.debt || 0) + 10;
-        allocations.smallCap = Math.max(0, (allocations.smallCap || 0) - 10);
-    } else if (style > 66) { // More growth
-        allocations.smallCap = (allocations.smallCap || 0) + 10;
-        allocations.debt = Math.max(0, (allocations.debt || 0) - 10);
-    }
-    
-    // Add ELSS if tax saving requested
-    if (includeTax) {
-        allocations.elss = 20;
-        allocations.largeCap = Math.max(0, (allocations.largeCap || 0) - 10);
-        allocations.debt = Math.max(0, (allocations.debt || 0) - 10);
-    }
-    
-    // Select funds for each category
-    for (const [category, allocation] of Object.entries(allocations)) {
-        if (allocation === 0) continue;
-        
-        let categoryFilter;
-        if (category === 'debt') categoryFilter = 'Debt';
-        else if (category === 'hybrid') categoryFilter = 'Hybrid';
-        else if (category === 'largeCap') categoryFilter = 'Large Cap';
-        else if (category === 'midCap') categoryFilter = 'Mid Cap';
-        else if (category === 'smallCap') categoryFilter = 'Small Cap';
-        else if (category === 'flexiCap') categoryFilter = 'Flexi Cap';
-        else if (category === 'elss') categoryFilter = 'ELSS';
-        
-        const categoryFunds = availableFunds.filter(f => f.category === categoryFilter);
-        
-        if (categoryFunds.length > 0) {
-            // Pick best performing fund (by 3Y CAGR)
-            const bestFund = categoryFunds.sort((a, b) => (b.cagr3y || 0) - (a.cagr3y || 0))[0];
-            portfolio.push({
-                ...bestFund,
-                allocation: allocation,
-                sipAmount: Math.round(budget * allocation / 100),
-                role: getRoleDescription(category)
-            });
-        }
-    }
-    
-    return portfolio;
-}
-
+`;
+document.head.appendChild(style);
