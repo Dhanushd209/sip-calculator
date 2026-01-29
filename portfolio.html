@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mutual Fund Portfolio Analyzer - Analyze your portfolio or get AI-suggested diversified mutual fund recommendations.">
+    <title>Portfolio Analyzer - SIPWise | Plan your SIP. Predict your future.</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="portfolio-style.css">
+</head>
+<body data-theme="light">
+    <header>
+        <div class="header-content">
+            <h1>
+                <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+                    <div class="logo">₹</div>
+                    SIPWise
+                </a>
+            </h1>
+            <nav class="main-nav">
+                <a href="index.html">Calculator</a>
+                <a href="portfolio.html" class="active">Portfolio</a>
+                <a href="pricing.html">Pricing</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="header-controls">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Mutual Fund Portfolio Analyzer</h1>
+            <p class="page-subtitle">Analyze your existing portfolio or get AI-powered diversified recommendations</p>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('manual')">
+                <div class="mode-icon">📊</div>
+                <div>
+                    <h3>Manual Mode</h3>
+                    <p>Analyze your own portfolio</p>
+                </div>
+            </button>
+            <button class="mode-btn" onclick="switchMode('auto')">
+                <div class="mode-icon">🤖</div>
+                <div>
+                    <h3>Auto Mode</h3>
+                    <p>Get AI-suggested portfolio</p>
+                </div>
+            </button>
+        </div>
+
+        <!-- MANUAL MODE SECTION -->
+        <div id="manualMode" class="mode-content active">
+            <div class="analyzer-grid">
+                <!-- Left Panel - Fund Selection -->
+                <div>
+                    <div class="card">
+                        <div class="card-title">🔍 Build Your Portfolio</div>
+                        
+                        <!-- Portfolio Settings -->
+                        <div class="form-group">
+                            <label>Total Monthly Budget</label>
+                            <input type="number" id="totalBudget" value="10000" min="500" placeholder="₹10,000">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Investment Horizon (Years)</label>
+                            <input type="range" id="portfolioTenure" min="1" max="30" value="10" oninput="updatePortfolioValue('portfolioTenure')">
+                            <div class="value-display">
+                                <span id="portfolioTenureDisplay">10</span> Years
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group" onclick="toggleEqualSplit()">
+                                <input type="checkbox" id="equalSplit" checked>
+                                <label>Equal Split Across Funds</label>
+                            </div>
+                        </div>
+
+                        <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border);">
+
+                        <!-- Fund List -->
+                        <div class="fund-list" id="fundList">
+                            <!-- Funds will be added here dynamically -->
+                        </div>
+
+                        <button class="btn btn-primary" onclick="addFund()" style="width: 100%; margin-top: 16px;">
+                            ➕ Add Fund (Max 10)
+                        </button>
+
+                        <button class="btn btn-secondary" onclick="analyzeManualPortfolio()" style="width: 100%; margin-top: 12px;">
+                            📊 Analyze Portfolio
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Analysis Results -->
+                <div>
+                    <div class="card">
+                        <div class="card-title">📈 Portfolio Analysis</div>
+                        
+                        <div id="portfolioResults" class="portfolio-results">
+                            <div class="empty-state">
+                                <div class="empty-icon">📋</div>
+                                <h3>No Portfolio Yet</h3>
+                                <p>Add mutual funds to start analyzing your portfolio</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="detailedAnalysis" style="margin-top: 20px; display: none;">
+                        <div class="card-title">📊 Detailed Breakdown</div>
+                        <div id="detailedResults"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AUTO MODE SECTION -->
+        <div id="autoMode" class="mode-content">
+            <div class="analyzer-grid">
+                <!-- Left Panel - Preferences -->
+                <div>
+                    <div class="card">
+                        <div class="card-title">🎯 Your Investment Profile</div>
+                        
+                        <div class="form-group">
+                            <label>Monthly Investment Budget</label>
+                            <input type="number" id="autoBudget" value="10000" min="500" placeholder="₹10,000">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Investment Horizon</label>
+                            <input type="range" id="autoTenure" min="1" max="30" value="10" oninput="updatePortfolioValue('autoTenure')">
+                            <div class="value-display">
+                                <span id="autoTenureDisplay">10</span> Years
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Risk Tolerance</label>
+                            <div class="risk-selector">
+                                <button class="risk-btn" data-risk="low" onclick="selectRisk('low')">
+                                    <span>🛡️</span>
+                                    <span>Low</span>
+                                    <small>Stable & Safe</small>
+                                </button>
+                                <button class="risk-btn active" data-risk="medium" onclick="selectRisk('medium')">
+                                    <span>⚖️</span>
+                                    <span>Medium</span>
+                                    <small>Balanced</small>
+                                </button>
+                                <button class="risk-btn" data-risk="high" onclick="selectRisk('high')">
+                                    <span>🚀</span>
+                                    <span>High</span>
+                                    <small>Growth Focused</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Expected Return (%)</label>
+                            <input type="range" id="autoExpectedReturn" min="6" max="20" value="12" step="0.5" oninput="updatePortfolioValue('autoExpectedReturn')">
+                            <div class="value-display">
+                                <span id="autoExpectedReturnDisplay">12</span>%
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Investment Style</label>
+                            <div class="slider-container">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Stability</span>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Growth</span>
+                                </div>
+                                <input type="range" id="styleSlider" min="0" max="100" value="50">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group" onclick="toggleTaxSaving()">
+                                <input type="checkbox" id="taxSaving">
+                                <label>Include ELSS (Tax Saving)</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group" onclick="toggleNFO()">
+                                <input type="checkbox" id="includeNFO">
+                                <label>Include New Fund Offers (NFO)</label>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="generateAutoPortfolio()" style="width: 100%; margin-top: 24px;">
+                            🤖 Generate Portfolio
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Suggested Portfolio -->
+                <div>
+                    <div class="card">
+                        <div class="card-title">🎯 Suggested Portfolio</div>
+                        
+                        <div id="autoPortfolioResults" class="portfolio-results">
+                            <div class="empty-state">
+                                <div class="empty-icon">🤖</div>
+                                <h3>Ready to Build Your Portfolio?</h3>
+                                <p>Fill in your preferences and click "Generate Portfolio" to get AI-powered recommendations</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="autoDetailedAnalysis" style="margin-top: 20px; display: none;">
+                        <div class="card-title">💡 Why These Funds?</div>
+                        <div id="autoRationale"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>SIPWise</h4>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">Plan your SIP. Predict your future.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Calculator</a></li>
+                    <li><a href="portfolio.html">Portfolio Analyzer</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                    This tool is for educational purposes only. Please consult a SEBI registered financial advisor before making investment decisions.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 SIPWise. All rights reserved.</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                Last Updated: January 2025 | Fund data is illustrative
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="portfolio-script.js"></script>
+</body>
+</html>

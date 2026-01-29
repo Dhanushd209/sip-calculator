@@ -11,15 +11,27 @@ let currentChartType = 'bar';
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Set default start date to today
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').value = today;
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('sipwise-theme') || 'light';
+    document.body.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeToggle').textContent = savedTheme === 'light' ? '🌙' : '☀️';
     
-    // Initial calculation
-    calculate();
+    // Set default start date to today (only on calculator page)
+    const startDateInput = document.getElementById('startDate');
+    if (startDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        startDateInput.value = today;
+    }
+    
+    // Initial calculation (only on calculator page)
+    if (typeof calculate === 'function') {
+        calculate();
+    }
     
     // Load URL parameters if present
-    loadURLParameters();
+    if (typeof loadURLParameters === 'function') {
+        loadURLParameters();
+    }
 });
 
 // ==========================================
@@ -33,8 +45,11 @@ function toggleTheme() {
     body.setAttribute('data-theme', newTheme);
     document.getElementById('themeToggle').textContent = newTheme === 'light' ? '🌙' : '☀️';
     
-    // Recreate chart with new theme colors
-    if (sipChart) {
+    // Save theme preference to localStorage
+    localStorage.setItem('sipwise-theme', newTheme);
+    
+    // Recreate chart with new theme colors (only if on calculator page)
+    if (sipChart && typeof calculate === 'function') {
         calculate();
     }
 }
@@ -226,11 +241,13 @@ function calculate() {
     const totalGains = corpus - totalInvested;
     const multiplier = corpus / totalInvested;
     const cagr = (Math.pow(corpus / totalInvested, 1 / duration) - 1) * 100;
+    const gainPercentage = ((totalGains / totalInvested) * 100).toFixed(2);
 
     // Update displays
     document.getElementById('totalInvested').textContent = '₹' + formatNumber(totalInvested);
     document.getElementById('expectedCorpus').textContent = '₹' + formatNumber(corpus);
     document.getElementById('totalGains').textContent = '₹' + formatNumber(totalGains);
+    document.getElementById('gainPercentage').textContent = gainPercentage + '%';
     document.getElementById('multiplier').textContent = multiplier.toFixed(2) + 'x';
     document.getElementById('cagr').textContent = cagr.toFixed(2) + '%';
 
