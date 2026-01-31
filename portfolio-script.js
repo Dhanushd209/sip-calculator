@@ -42,8 +42,11 @@ const RISK_MAPPING = {
 // API Helper Functions
 // ==========================================
 
+/**
+ * Search for mutual funds - improved version based on working code
+ */
 async function searchFunds(query) {
-    if (!query || query.length < 2) return [];
+    if (!query || query.length < 3) return [];
     
     const cacheKey = query.toLowerCase();
     if (apiCache.search[cacheKey]) {
@@ -52,24 +55,39 @@ async function searchFunds(query) {
     
     try {
         const response = await fetch(`${MFAPI_BASE_URL}/search?q=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('Search failed');
+        if (!response.ok) throw new Error('Network error');
         
         const results = await response.json();
         
-        const enrichedResults = results
-            .filter(fund => 
-                fund.schemeName.toLowerCase().includes('direct') && 
-                fund.schemeName.toLowerCase().includes('growth')
-            )
-            .map(fund => ({
-                ...fund,
-                category: detectCategory(fund.schemeName),
-                risk: detectRisk(fund.schemeName)
-            }))
-            .slice(0, 20);
+        if (!results || results.length === 0) {
+            return [];
+        }
         
-        apiCache.search[cacheKey] = enrichedResults;
-        return enrichedResults;
+        // Enrich results with category and risk info
+        // Filter preferentially for Direct Growth but don't exclude all others
+        const enrichedResults = results.map(fund => ({
+            schemeCode: fund.schemeCode,
+            schemeName: fund.schemeName,
+            category: detectCategory(fund.schemeName),
+            risk: detectRisk(fund.schemeName),
+            isDirect: fund.schemeName.toLowerCase().includes('direct'),
+            isGrowth: fund.schemeName.toLowerCase().includes('growth')
+        }));
+        
+        // Sort: Direct Growth first, then Direct, then others
+        enrichedResults.sort((a, b) => {
+            if (a.isDirect && a.isGrowth && !(b.isDirect && b.isGrowth)) return -1;
+            if (!(a.isDirect && a.isGrowth) && b.isDirect && b.isGrowth) return 1;
+            if (a.isDirect && !b.isDirect) return -1;
+            if (!a.isDirect && b.isDirect) return 1;
+            return 0;
+        });
+        
+        // Limit to top 15 results
+        const limitedResults = enrichedResults.slice(0, 15);
+        
+        apiCache.search[cacheKey] = limitedResults;
+        return limitedResults;
     } catch (error) {
         console.error('Fund search error:', error);
         return [];
@@ -406,6 +424,8 @@ function createFundCard(fund, index) {
                 <span class="fund-badge">${fund.amc}</span>
                 <span class="fund-badge">${returnsDisplay}</span>
                 ${fund.isNFO ? '<span class="fund-badge" style="background: #10B981; color: white;">NFO</span>' : ''}
+                ${fund.isDirect ? '<span class="fund-badge" style="background: #3B82F6; color: white;">Direct</span>' : ''}
+                ${fund.isGrowth ? '<span class="fund-badge" style="background: #10B981; color: white;">Growth</span>' : ''}
             </div>
             ${fund.nav ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">NAV: ₹${fund.nav.toFixed(2)} (${fund.navDate})</div>` : ''}
         </div>
@@ -461,20 +481,34 @@ function showFundSearchModal() {
             <div class="modal-body">
                 <input type="text" 
                        id="fundSearchInput" 
-                       placeholder="Type fund name or AMC (e.g., HDFC, Axis, Parag Parikh)..." 
+                       placeholder="Type at least 3 characters (e.g., parag, hdfc, axis, quant)..." 
                        oninput="debounceSearch()"
+                       autocomplete="off"
                        autofocus>
                 <div id="fundSearchResults" class="fund-search-results">
                     <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
                         <div style="font-size: 48px; margin-bottom: 12px;">🔎</div>
                         <p>Start typing to search for mutual funds</p>
-                        <p style="font-size: 12px; margin-top: 8px;">Only Direct-Growth plans shown</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Type at least 3 characters</p>
+                        <p style="font-size: 12px; margin-top: 4px;">Direct Growth plans shown first</p>
                     </div>
                 </div>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
+    
+    // Focus on search input
+    setTimeout(() => {
+        document.getElementById('fundSearchInput').focus();
+    }, 100);
+    
+    // Add Enter key support
+    document.getElementById('fundSearchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchFundsInModal();
+        }
+    });
 }
 
 function handleOverlayClick(event) {
@@ -500,15 +534,16 @@ function debounceSearch() {
 }
 
 async function searchFundsInModal() {
-    const query = document.getElementById('fundSearchInput').value.trim();
+    const input = document.getElementById('fundSearchInput');
+    const query = input.value.trim();
     const resultsDiv = document.getElementById('fundSearchResults');
     
-    if (query.length < 2) {
+    if (query.length < 3) {
         resultsDiv.innerHTML = `
             <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
                 <div style="font-size: 48px; margin-bottom: 12px;">🔎</div>
-                <p>Start typing to search for mutual funds</p>
-                <p style="font-size: 12px; margin-top: 8px;">Only Direct-Growth plans shown</p>
+                <p>Please type at least 3 characters</p>
+                <p style="font-size: 12px; margin-top: 8px;">e.g., parag, hdfc, axis, quant</p>
             </div>
         `;
         return;
@@ -528,28 +563,31 @@ async function searchFundsInModal() {
             <div class="no-results">
                 <div style="font-size: 48px; margin-bottom: 12px;">😕</div>
                 <p>No funds found matching "${query}"</p>
-                <p style="font-size: 12px; margin-top: 8px; color: var(--text-secondary);">Try different keywords or AMC names</p>
+                <p style="font-size: 12px; margin-top: 8px; color: var(--text-secondary);">Try different keywords (e.g., AMC name, fund type)</p>
             </div>
         `;
         return;
     }
     
-    resultsDiv.innerHTML = results.map(fund => {
-        const returnsText = fund.cagr5y !== undefined ? 
-            (fund.cagr5y ? `5Y: ${fund.cagr5y.toFixed(1)}%` : 'New Fund') : 
-            '';
+    let html = '';
+    for (const fund of results) {
+        const alreadyAdded = currentPortfolio.funds.some(item => item.schemeCode === fund.schemeCode);
+        const planType = (fund.isDirect ? 'Direct' : 'Regular') + ' • ' + (fund.isGrowth ? 'Growth' : 'Other');
         
-        return `
-            <div class="fund-result-item" onclick="addFundToPortfolioBySchemeCode(${fund.schemeCode})">
+        html += `
+            <div class="fund-result-item ${alreadyAdded ? 'disabled' : ''}" onclick="${alreadyAdded ? '' : 'addFundToPortfolioBySchemeCode(' + fund.schemeCode + ')'}">
                 <div class="fund-result-name">${fund.schemeName}</div>
                 <div class="fund-result-meta">
                     <span class="fund-badge ${fund.category.toLowerCase().replace(' ', '-')}">${fund.category}</span>
-                    ${returnsText ? '<span class="fund-badge">' + returnsText + '</span>' : ''}
                     <span class="fund-badge">${fund.risk} Risk</span>
+                    <span class="fund-badge">${planType}</span>
+                    ${alreadyAdded ? '<span class="fund-badge" style="background: #10B981; color: white;">✓ Added</span>' : ''}
                 </div>
             </div>
         `;
-    }).join('');
+    }
+    
+    resultsDiv.innerHTML = html;
 }
 
 async function addFundToPortfolioBySchemeCode(schemeCode) {
@@ -559,8 +597,7 @@ async function addFundToPortfolioBySchemeCode(schemeCode) {
     }
     
     if (currentPortfolio.funds.find(f => f.schemeCode === schemeCode)) {
-        alert('This fund is already in your portfolio');
-        return;
+        return; // Already added
     }
     
     // Show inline loading
@@ -588,7 +625,9 @@ async function addFundToPortfolioBySchemeCode(schemeCode) {
             allocation: 10,
             stepUpEnabled: false,
             stepUpRate: 10,
-            isNFO: !fundDetails.cagr1y && !fundDetails.cagr3y && !fundDetails.cagr5y
+            isNFO: !fundDetails.cagr1y && !fundDetails.cagr3y && !fundDetails.cagr5y,
+            isDirect: fundDetails.name.toLowerCase().includes('direct'),
+            isGrowth: fundDetails.name.toLowerCase().includes('growth')
         };
         
         currentPortfolio.funds.push(newFund);
@@ -603,7 +642,7 @@ async function addFundToPortfolioBySchemeCode(schemeCode) {
             modalHeader.textContent = `🔍 Search & Add Funds (${currentPortfolio.funds.length}/10)`;
         }
         
-        // Restore search results
+        // Restore search results (keep modal open)
         searchFundsInModal();
         
     } catch (error) {
@@ -1050,14 +1089,14 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
     
     const searchPromises = [];
     const categorySearchTerms = {
-        'Debt': 'debt fund direct growth',
-        'Hybrid': 'hybrid fund direct growth',
-        'Large Cap': 'large cap direct growth',
-        'Mid Cap': 'mid cap direct growth',
-        'Small Cap': 'small cap direct growth',
-        'Flexi Cap': 'flexi cap direct growth',
-        'ELSS': 'elss direct growth',
-        'Index': 'nifty index direct growth'
+        'Debt': 'debt',
+        'Hybrid': 'hybrid',
+        'Large Cap': 'large cap',
+        'Mid Cap': 'mid cap',
+        'Small Cap': 'small cap',
+        'Flexi Cap': 'flexi cap',
+        'ELSS': 'elss',
+        'Index': 'nifty'
     };
     
     for (const [category, allocation] of Object.entries(allocations)) {
@@ -1069,7 +1108,7 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
                 searchFunds(searchTerm).then(results => ({
                     category,
                     allocation,
-                    funds: results.filter(f => f.category === category).slice(0, 3)
+                    funds: results.filter(f => f.category === category && f.isDirect && f.isGrowth).slice(0, 3)
                 }))
             );
         }
@@ -1225,6 +1264,12 @@ style.textContent = `
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+.fund-result-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--surface);
 }
 `;
 document.head.appendChild(style);
