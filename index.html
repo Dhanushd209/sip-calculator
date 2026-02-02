@@ -6,7 +6,7 @@
     <meta name="description" content="SIPWise - Plan your SIP. Predict your future. Advanced SIP calculator with step-up, inflation adjustment, tax calculations and more.">
     <meta name="keywords" content="SIP Calculator, Mutual Funds, Investment Calculator, India, Tax Calculator, SIPWise">
     <title>SIPWise - Plan your SIP. Predict your future.</title>
-    
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-8RSFJGFF8B"></script>
     <script>
@@ -32,6 +32,7 @@
     
     <!-- Custom Styles -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="onboarding.css">
 </head>
 <body data-theme="light">
     <header>
@@ -51,6 +52,9 @@
             </nav>
             <div class="header-controls">
                 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <button class="restart-tutorial-btn" onclick="restartOnboarding()" title="Restart Tutorial">
+                    <span>🎯</span> Tutorial
+                </button>
             </div>
         </div>
     </header>
@@ -477,5 +481,7 @@
 
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
+    <script src="onboarding.js"></script>
+    
 </body>
 </html>

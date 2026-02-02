@@ -1,33 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Mutual Fund Portfolio Analyzer - Analyze your portfolio or get AI-suggested diversified mutual fund recommendations.">
-    
+    <meta name="description"
+        content="Mutual Fund Portfolio Analyzer - Analyze your portfolio or get AI-suggested diversified mutual fund recommendations.">
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-8RSFJGFF8B"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-8RSFJGFF8B');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8RSFJGFF8B');
     </script>
-    
+
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <title>Portfolio Analyzer - SIPWise | Plan your SIP. Predict your future.</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="portfolio-style.css">
+    <link rel="stylesheet" href="onboarding.css">
 </head>
+
 <body data-theme="light">
     <header>
         <div class="header-content">
             <h1>
-                <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+                <a href="index.html"
+                    style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
                     <div class="logo">₹</div>
                     SIPWise
                 </a>
@@ -41,6 +49,9 @@
             </nav>
             <div class="header-controls">
                 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+                <button class="restart-tutorial-btn" onclick="restartPortfolioOnboarding()">
+                    <span>🎯</span> Tutorial
+                </button>
             </div>
         </div>
     </header>
@@ -48,7 +59,10 @@
     <div class="container">
         <div class="disclaimer">
             <strong>⚠️ Important Disclaimer</strong>
-            Mutual fund investments are subject to market risks. NAV data is sourced from publicly available AMFI data via MFAPI.in. Returns are calculated based on historical NAVs. Past performance does not guarantee future results. Please consult a SEBI registered financial advisor before making investment decisions. This tool is for educational purposes only and does not constitute financial advice.
+            Mutual fund investments are subject to market risks. NAV data is sourced from publicly available AMFI data
+            via MFAPI.in. Returns are calculated based on historical NAVs. Past performance does not guarantee future
+            results. Please consult a SEBI registered financial advisor before making investment decisions. This tool is
+            for educational purposes only and does not constitute financial advice.
         </div>
 
         <div class="page-header">
@@ -81,7 +95,7 @@
                 <div>
                     <div class="card">
                         <div class="card-title">🔍 Build Your Portfolio</div>
-                        
+
                         <!-- Portfolio Settings -->
                         <div class="form-group">
                             <label>Total Monthly Budget</label>
@@ -90,7 +104,8 @@
 
                         <div class="form-group">
                             <label>Investment Horizon (Years)</label>
-                            <input type="range" id="portfolioTenure" min="1" max="30" value="10" oninput="updatePortfolioValue('portfolioTenure')">
+                            <input type="range" id="portfolioTenure" min="1" max="30" value="10"
+                                oninput="updatePortfolioValue('portfolioTenure')">
                             <div class="value-display">
                                 <span id="portfolioTenureDisplay">10</span> Years
                             </div>
@@ -110,11 +125,13 @@
                             <!-- Funds will be rendered here -->
                         </div>
 
-                        <button class="btn btn-primary" onclick="showFundSearchModal()" style="width: 100%; margin-top: 16px;">
+                        <button class="btn btn-primary" onclick="showFundSearchModal()"
+                            style="width: 100%; margin-top: 16px;">
                             ➕ Add Fund (Max 10)
                         </button>
 
-                        <button class="btn btn-secondary" onclick="analyzeManualPortfolio()" style="width: 100%; margin-top: 12px;">
+                        <button class="btn btn-secondary" onclick="analyzeManualPortfolio()"
+                            style="width: 100%; margin-top: 12px;">
                             📊 Analyze Portfolio
                         </button>
                     </div>
@@ -124,7 +141,7 @@
                 <div>
                     <div class="card">
                         <div class="card-title">📈 Portfolio Analysis</div>
-                        
+
                         <div id="portfolioResults" class="portfolio-results">
                             <div class="empty-state">
                                 <div class="empty-icon">📋</div>
@@ -149,7 +166,7 @@
                 <div>
                     <div class="card">
                         <div class="card-title">🎯 Your Investment Profile</div>
-                        
+
                         <div class="form-group">
                             <label>Monthly Investment Budget</label>
                             <input type="number" id="autoBudget" value="10000" min="500" placeholder="₹10,000">
@@ -157,7 +174,8 @@
 
                         <div class="form-group">
                             <label>Investment Horizon</label>
-                            <input type="range" id="autoTenure" min="1" max="30" value="10" oninput="updatePortfolioValue('autoTenure')">
+                            <input type="range" id="autoTenure" min="1" max="30" value="10"
+                                oninput="updatePortfolioValue('autoTenure')">
                             <div class="value-display">
                                 <span id="autoTenureDisplay">10</span> Years
                             </div>
@@ -186,7 +204,8 @@
 
                         <div class="form-group">
                             <label>Expected Return (%)</label>
-                            <input type="range" id="autoExpectedReturn" min="6" max="20" value="12" step="0.5" oninput="updatePortfolioValue('autoExpectedReturn')">
+                            <input type="range" id="autoExpectedReturn" min="6" max="20" value="12" step="0.5"
+                                oninput="updatePortfolioValue('autoExpectedReturn')">
                             <div class="value-display">
                                 <span id="autoExpectedReturnDisplay">12</span>%
                             </div>
@@ -217,7 +236,8 @@
                             </div>
                         </div>
 
-                        <button class="btn btn-primary" onclick="generateAutoPortfolio()" style="width: 100%; margin-top: 24px;">
+                        <button class="btn btn-primary" onclick="generateAutoPortfolio()"
+                            style="width: 100%; margin-top: 24px;">
                             🤖 Generate Portfolio
                         </button>
                     </div>
@@ -227,12 +247,13 @@
                 <div>
                     <div class="card">
                         <div class="card-title">🎯 Suggested Portfolio</div>
-                        
+
                         <div id="autoPortfolioResults" class="portfolio-results">
                             <div class="empty-state">
                                 <div class="empty-icon">🤖</div>
                                 <h3>Ready to Build Your Portfolio?</h3>
-                                <p>Fill in your preferences and click "Generate Portfolio" to get AI-powered recommendations</p>
+                                <p>Fill in your preferences and click "Generate Portfolio" to get AI-powered
+                                    recommendations</p>
                             </div>
                         </div>
                     </div>
@@ -250,9 +271,10 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h4>SIPWise</h4>
-                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">Plan your SIP. Predict your future.</p>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">Plan your SIP. Predict your
+                    future.</p>
             </div>
-            
+
             <div class="footer-section">
                 <h4>Product</h4>
                 <ul class="footer-links">
@@ -262,7 +284,7 @@
                     <li><a href="about.html">About</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-section">
                 <h4>Support</h4>
                 <ul class="footer-links">
@@ -270,16 +292,18 @@
                     <li><a href="privacy.html">Privacy Policy</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-section">
                 <h4>Legal & Data Source</h4>
                 <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
-                    NAV data sourced from publicly available AMFI data via <a href="https://www.mfapi.in/" target="_blank" style="color: var(--primary);">MFAPI.in</a>. 
-                    This tool is for educational purposes only. Please consult a SEBI registered financial advisor before making investment decisions.
+                    NAV data sourced from publicly available AMFI data via <a href="https://www.mfapi.in/"
+                        target="_blank" style="color: var(--primary);">MFAPI.in</a>.
+                    This tool is for educational purposes only. Please consult a SEBI registered financial advisor
+                    before making investment decisions.
                 </p>
             </div>
         </div>
-        
+
         <div class="footer-bottom">
             <p>&copy; 2025 SIPWise. All rights reserved.</p>
             <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
@@ -290,5 +314,7 @@
 
     <script src="script.js"></script>
     <script src="portfolio-script.js"></script>
+    <script src="portfolio-onboarding.js"></script>
 </body>
+
 </html>
