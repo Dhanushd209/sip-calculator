@@ -329,9 +329,9 @@ function portfolioPreviousStep() {
 }
 
 function skipPortfolioOnboarding() {
-    if (confirm('Skip the portfolio tutorial? You can always restart it from the Tutorial button!')) {
-        closePortfolioOnboarding();
-    }
+    // Just skip without confirmation
+    closePortfolioOnboarding();
+    localStorage.setItem('sipwise-portfolio-onboarding-completed', 'true');
 }
 
 function completePortfolioOnboarding() {
@@ -392,11 +392,9 @@ function applyPortfolioOnboardingSettings() {
         // Select risk
         selectRisk(data.risk);
         
-        // Optionally auto-generate portfolio
+        // Auto-generate portfolio after settings are applied
         setTimeout(() => {
-            if (confirm('Generate portfolio now with your selected preferences?')) {
-                generateAutoPortfolio();
-            }
+            generateAutoPortfolio();
         }, 500);
     }
 }

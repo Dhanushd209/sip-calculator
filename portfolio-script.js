@@ -879,6 +879,19 @@ function displayManualResults(totalInvested, totalCorpus, totalGains, weightedCA
     `;
     
     detailedDiv.style.display = 'block';
+
+    const risk = getRiskFromPortfolio(currentPortfolio.funds);
+    const totalBudget = parseFloat(document.getElementById('totalBudget').value) || 10000;
+    
+    displayEnhancedPortfolioResults(
+        currentPortfolio.funds,
+        totalInvested,
+        totalCorpus,
+        weightedCAGR,
+        tenure,
+        risk,
+        totalBudget
+    )
 }
 
 // ==========================================
@@ -1058,6 +1071,18 @@ function displayAutoResults(portfolio, totalInvested, totalCorpus, weightedCAGR,
     `).join('');
     
     detailedDiv.style.display = 'block';
+
+    const totalBudget = parseFloat(document.getElementById('autoBudget').value) || 10000;
+    
+    displayEnhancedPortfolioResults(
+        portfolio,
+        totalInvested,
+        totalCorpus,
+        weightedCAGR,
+        tenure,
+        risk,
+        totalBudget
+    );
 }
 
 async function createDiversifiedPortfolio(budget, risk, style, includeTax, includeNFO) {

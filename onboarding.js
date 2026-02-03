@@ -355,9 +355,9 @@ function previousStep() {
 }
 
 function skipOnboarding() {
-    if (confirm('Are you sure you want to skip the tutorial? You can always explore on your own!')) {
-        closeOnboarding();
-    }
+    // Just skip without confirmation
+    closeOnboarding();
+    localStorage.setItem('sipwise-onboarding-completed', 'true');
 }
 
 function completeOnboarding() {
