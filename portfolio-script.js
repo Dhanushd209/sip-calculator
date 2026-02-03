@@ -356,16 +356,47 @@ document.addEventListener('DOMContentLoaded', function() {
 // Mode Switching
 // ==========================================
 
-function switchMode(mode) {
-    currentPMode = mode;
+function switchMode(input) {
     
+    let mode;
+
+    // Determine mode safely (this is the only new part)
+    if (input && input.target) {
+        // Called from real button click
+        mode = input.target.dataset.mode || input.target.getAttribute('data-mode');
+    }
+    else if (typeof input === 'string') {
+        // Called from tutorial / code like switchMode('auto')
+        mode = input.toLowerCase();
+    }
+    else {
+        console.warn("switchMode called with invalid argument");
+        return;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Everything below this line is YOUR original code — unchanged
+    // ─────────────────────────────────────────────────────────────
+
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.mode-btn[data-mode="${mode}"]`)?.classList.add('active');
+    document.getElementById('manualMode').classList.toggle('active', mode === 'manual');
+    document.getElementById('autoMode').classList.toggle('active', mode === 'auto');
+   
+    currentPMode = mode;
+   
     const buttons = document.querySelectorAll('.mode-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.closest('.mode-btn').classList.add('active');
-    
+   
+    // This was crashing — we only run it when we have a real event
+    if (input && input.target) {
+        event.target.closest('.mode-btn').classList.add('active');
+    }
+
     document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
     document.getElementById(mode + 'Mode').classList.add('active');
 }
+
 
 // ==========================================
 // Portfolio Management

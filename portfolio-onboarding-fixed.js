@@ -1,12 +1,13 @@
 // ==========================================
-// Portfolio Analyzer Onboarding Wizard
+// Portfolio Analyzer Onboarding Wizard (FINAL WORKING VERSION)
+// With extensive debugging and fallback mechanisms
 // ==========================================
 
 let portfolioOnboardingState = {
     currentStep: 0,
     totalSteps: 4,
     data: {
-        mode: null,          // 'manual' or 'auto'
+        mode: null,
         budget: 10000,
         tenure: 10,
         risk: 'medium',
@@ -14,14 +15,11 @@ let portfolioOnboardingState = {
     }
 };
 
-// Check if user has completed portfolio onboarding
 function shouldShowPortfolioOnboarding() {
     const hasSeenOnboarding = localStorage.getItem('sipwise-portfolio-onboarding-completed');
-    const isFirstVisit = !hasSeenOnboarding;
-    return isFirstVisit;
+    return !hasSeenOnboarding;
 }
 
-// Initialize onboarding on page load
 function initializePortfolioOnboarding() {
     if (shouldShowPortfolioOnboarding() && window.location.pathname.includes('portfolio.html')) {
         setTimeout(() => {
@@ -30,7 +28,6 @@ function initializePortfolioOnboarding() {
     }
 }
 
-// Show onboarding modal
 function showPortfolioOnboarding() {
     const modal = document.createElement('div');
     modal.className = 'onboarding-modal';
@@ -50,38 +47,28 @@ function showPortfolioOnboarding() {
                 <button class="onboarding-skip" onclick="skipPortfolioOnboarding()">Skip Tutorial</button>
             </div>
             
-            <div class="onboarding-content" id="portfolioOnboardingContent">
-                <!-- Steps will be rendered here -->
-            </div>
+            <div class="onboarding-content" id="portfolioOnboardingContent"></div>
             
             <div class="onboarding-footer">
-                <button class="btn btn-secondary" id="portfolioBackBtn" onclick="portfolioPreviousStep()" style="display: none;">
-                    ← Back
-                </button>
-                <button class="btn btn-primary" id="portfolioNextBtn" onclick="portfolioNextStep()">
-                    Next →
-                </button>
+                <button class="btn btn-secondary" id="portfolioBackBtn" onclick="portfolioPreviousStep()" style="display: none;">← Back</button>
+                <button class="btn btn-primary" id="portfolioNextBtn" onclick="portfolioNextStep()">Next →</button>
             </div>
         </div>
     `;
     
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
-    
     renderPortfolioOnboardingStep();
 }
 
-// Render current step
 function renderPortfolioOnboardingStep() {
     const content = document.getElementById('portfolioOnboardingContent');
     const step = portfolioOnboardingState.currentStep;
     const nextBtn = document.getElementById('portfolioNextBtn');
     const backBtn = document.getElementById('portfolioBackBtn');
     
-    // Show/hide back button
     backBtn.style.display = step > 0 ? 'block' : 'none';
     
-    // Update progress
     const progress = ((step) / portfolioOnboardingState.totalSteps) * 100;
     document.getElementById('portfolioProgress').style.width = progress + '%';
     document.getElementById('portfolioStepText').textContent = `Step ${step + 1}`;
@@ -95,28 +82,18 @@ function renderPortfolioOnboardingStep() {
                     <div class="step-icon">🎯</div>
                     <h2>Welcome to Portfolio Analyzer!</h2>
                     <p class="step-description">Build and analyze your mutual fund portfolio in 2 different ways</p>
-                    
                     <div class="welcome-features">
                         <div class="feature-item">
                             <span class="feature-icon">📊</span>
-                            <div>
-                                <strong>Manual Mode</strong>
-                                <p>Add your own funds and customize allocation</p>
-                            </div>
+                            <div><strong>Manual Mode</strong><p>Add your own funds and customize allocation</p></div>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">🤖</span>
-                            <div>
-                                <strong>Auto Mode</strong>
-                                <p>Get AI-suggested diversified portfolio</p>
-                            </div>
+                            <div><strong>Auto Mode</strong><p>Get AI-suggested diversified portfolio</p></div>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">📈</span>
-                            <div>
-                                <strong>Real NAV Data</strong>
-                                <p>Live data from AMFI via MFAPI.in</p>
-                            </div>
+                            <div><strong>Real NAV Data</strong><p>Live data from AMFI via MFAPI.in</p></div>
                         </div>
                     </div>
                 </div>
@@ -130,15 +107,12 @@ function renderPortfolioOnboardingStep() {
                     <div class="step-icon">🎯</div>
                     <h2>Choose Your Approach</h2>
                     <p class="step-description">How do you want to build your portfolio?</p>
-                    
                     <div class="goal-cards">
                         <div class="goal-card ${portfolioOnboardingState.data.mode === 'manual' ? 'selected' : ''}" onclick="selectPortfolioMode('manual')">
                             <div class="goal-card-icon">📊</div>
                             <h3>Manual Mode</h3>
                             <p>I want to select my own funds</p>
-                            <div class="goal-card-example">
-                                <strong>Best for:</strong> Experienced investors who know specific funds
-                            </div>
+                            <div class="goal-card-example"><strong>Best for:</strong> Experienced investors who know specific funds</div>
                             <ul class="mode-features">
                                 <li>Search & add up to 10 funds</li>
                                 <li>Customize allocation %</li>
@@ -146,14 +120,11 @@ function renderPortfolioOnboardingStep() {
                                 <li>See detailed performance metrics</li>
                             </ul>
                         </div>
-                        
                         <div class="goal-card ${portfolioOnboardingState.data.mode === 'auto' ? 'selected' : ''}" onclick="selectPortfolioMode('auto')">
                             <div class="goal-card-icon">🤖</div>
                             <h3>Auto Mode</h3>
                             <p>Get AI-suggested portfolio</p>
-                            <div class="goal-card-example">
-                                <strong>Best for:</strong> Beginners or those wanting quick recommendations
-                            </div>
+                            <div class="goal-card-example"><strong>Best for:</strong> Beginners or those wanting quick recommendations</div>
                             <ul class="mode-features">
                                 <li>Set your risk profile</li>
                                 <li>AI picks best funds</li>
@@ -174,26 +145,19 @@ function renderPortfolioOnboardingStep() {
                     <div class="step-icon">💰</div>
                     <h2>Set Your Investment Parameters</h2>
                     <p class="step-description">How much can you invest monthly?</p>
-                    
                     <div class="input-card">
                         <label>Monthly Investment Budget</label>
                         <div class="amount-input">
                             <span class="currency">₹</span>
-                            <input type="number" id="portfolioBudgetInput" value="${portfolioOnboardingState.data.budget}" 
-                                   min="500" step="1000" oninput="updatePortfolioOnboardingValue('budget', this.value)">
+                            <input type="number" id="portfolioBudgetInput" value="${portfolioOnboardingState.data.budget}" min="500" step="1000" oninput="updatePortfolioOnboardingValue('budget', this.value)">
                         </div>
                         <div class="amount-display">₹${formatCurrency(portfolioOnboardingState.data.budget)}/month</div>
                     </div>
-                    
                     <div class="input-card" style="margin-top: 24px;">
                         <label>Investment Duration</label>
-                        <input type="range" id="portfolioTenureInput" min="1" max="30" value="${portfolioOnboardingState.data.tenure}" 
-                               oninput="updatePortfolioOnboardingValue('tenure', this.value)">
-                        <div class="duration-display">
-                            <span>${portfolioOnboardingState.data.tenure}</span> years
-                        </div>
+                        <input type="range" id="portfolioTenureInput" min="1" max="30" value="${portfolioOnboardingState.data.tenure}" oninput="updatePortfolioOnboardingValue('tenure', this.value)">
+                        <div class="duration-display"><span>${portfolioOnboardingState.data.tenure}</span> years</div>
                     </div>
-                    
                     <div class="quick-presets">
                         <button onclick="setPortfolioTenure(5)" class="preset-btn">5 years</button>
                         <button onclick="setPortfolioTenure(10)" class="preset-btn">10 years</button>
@@ -213,7 +177,6 @@ function renderPortfolioOnboardingStep() {
                         <div class="step-icon">⚖️</div>
                         <h2>Choose Your Risk Profile</h2>
                         <p class="step-description">This determines fund allocation and expected returns</p>
-                        
                         <div class="risk-cards">
                             <div class="risk-card ${portfolioOnboardingState.data.risk === 'low' ? 'selected' : ''}" onclick="selectPortfolioRisk('low')">
                                 <div class="risk-card-icon">🛡️</div>
@@ -226,7 +189,6 @@ function renderPortfolioOnboardingStep() {
                                     <li>Low volatility</li>
                                 </ul>
                             </div>
-                            
                             <div class="risk-card ${portfolioOnboardingState.data.risk === 'medium' ? 'selected' : ''}" onclick="selectPortfolioRisk('medium')">
                                 <div class="risk-card-icon">⚖️</div>
                                 <h3>Moderate</h3>
@@ -238,7 +200,6 @@ function renderPortfolioOnboardingStep() {
                                     <li>Moderate volatility</li>
                                 </ul>
                             </div>
-                            
                             <div class="risk-card ${portfolioOnboardingState.data.risk === 'high' ? 'selected' : ''}" onclick="selectPortfolioRisk('high')">
                                 <div class="risk-card-icon">🚀</div>
                                 <h3>Aggressive</h3>
@@ -260,7 +221,6 @@ function renderPortfolioOnboardingStep() {
                         <div class="step-icon">💡</div>
                         <h2>Manual Mode Tips</h2>
                         <p class="step-description">Here's how to build your perfect portfolio</p>
-                        
                         <div class="tips-container">
                             <div class="tip-card">
                                 <div class="tip-icon">🔍</div>
@@ -268,21 +228,18 @@ function renderPortfolioOnboardingStep() {
                                 <p>Click "Add Fund" and search by AMC name, fund type, or scheme name</p>
                                 <div class="tip-example">Example: "parag parikh", "hdfc equity", "axis midcap"</div>
                             </div>
-                            
                             <div class="tip-card">
                                 <div class="tip-icon">⚖️</div>
                                 <h4>Diversify Wisely</h4>
                                 <p>Mix different categories for balanced portfolio</p>
                                 <div class="tip-example">Large Cap + Mid Cap + Debt = Balanced</div>
                             </div>
-                            
                             <div class="tip-card">
                                 <div class="tip-icon">📊</div>
                                 <h4>Check Performance</h4>
                                 <p>Look for funds with consistent 3Y and 5Y CAGR</p>
                                 <div class="tip-example">Prefer Direct Growth plans for lower fees</div>
                             </div>
-                            
                             <div class="tip-card">
                                 <div class="tip-icon">📈</div>
                                 <h4>Use Step-up SIP</h4>
@@ -290,7 +247,6 @@ function renderPortfolioOnboardingStep() {
                                 <div class="tip-example">10% annual increase = Higher corpus</div>
                             </div>
                         </div>
-                        
                         <div class="info-box" style="margin-top: 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.05)); border-left-color: var(--primary);">
                             <strong>📌 Remember:</strong>
                             <ul style="margin: 8px 0 0 20px; font-size: 13px; line-height: 1.8;">
@@ -311,7 +267,6 @@ function renderPortfolioOnboardingStep() {
     content.innerHTML = stepHTML;
 }
 
-// Navigation functions
 function portfolioNextStep() {
     if (portfolioOnboardingState.currentStep < portfolioOnboardingState.totalSteps - 1) {
         portfolioOnboardingState.currentStep++;
@@ -329,23 +284,17 @@ function portfolioPreviousStep() {
 }
 
 function skipPortfolioOnboarding() {
-    // Just skip without confirmation
     closePortfolioOnboarding();
     localStorage.setItem('sipwise-portfolio-onboarding-completed', 'true');
 }
 
 function completePortfolioOnboarding() {
-    // Apply settings
-    applyPortfolioOnboardingSettings();
-    
-    // Mark as completed
     localStorage.setItem('sipwise-portfolio-onboarding-completed', 'true');
-    
-    // Close modal
     closePortfolioOnboarding();
-    
-    // Show success message
-    showPortfolioSuccessMessage();
+    setTimeout(() => {
+        applyPortfolioOnboardingSettings();
+        showPortfolioSuccessMessage();
+    }, 300);
 }
 
 function closePortfolioOnboarding() {
@@ -358,44 +307,108 @@ function closePortfolioOnboarding() {
 
 function applyPortfolioOnboardingSettings() {
     const data = portfolioOnboardingState.data;
+    console.log('🚀 Starting portfolio setup with:', data);
     
-    // Switch to selected mode
     if (data.mode === 'manual') {
-        switchMode('manual');
-        
-        // Set budget and tenure
-        const budgetInput = document.getElementById('totalBudget');
-        const tenureInput = document.getElementById('portfolioTenure');
-        if (budgetInput) budgetInput.value = data.budget;
-        if (tenureInput) {
-            tenureInput.value = data.tenure;
-            updatePortfolioValue('portfolioTenure');
+        console.log('📊 Manual Mode Selected');
+        if (typeof switchMode === 'function') {
+            switchMode('manual');
+        } else {
+            document.querySelector('[onclick*="switchMode(\'manual\')"]')?.click();
         }
-        
-        // Show the add fund modal after a delay
         setTimeout(() => {
-            showFundSearchModal();
-        }, 800);
-        
+            const budgetInput = document.getElementById('totalBudget');
+            const tenureInput = document.getElementById('portfolioTenure');
+            if (budgetInput) budgetInput.value = data.budget;
+            if (tenureInput) {
+                tenureInput.value = data.tenure;
+                if (typeof updatePortfolioValue === 'function') updatePortfolioValue('portfolioTenure');
+            }
+            setTimeout(() => {
+                if (typeof showFundSearchModal === 'function') {
+                    showFundSearchModal();
+                } else {
+                    document.querySelector('button[onclick*="showFundSearchModal"]')?.click();
+                }
+            }, 500);
+        }, 300);
     } else {
-        switchMode('auto');
+        // AUTO MODE - CRITICAL SECTION
+        console.log('🤖 Auto Mode Selected - Generating Portfolio...');
         
-        // Set auto mode parameters
-        const autoBudget = document.getElementById('autoBudget');
-        const autoTenure = document.getElementById('autoTenure');
-        if (autoBudget) autoBudget.value = data.budget;
-        if (autoTenure) {
-            autoTenure.value = data.tenure;
-            updatePortfolioValue('autoTenure');
+        // Step 1: Switch to auto mode
+        if (typeof switchMode === 'function') {
+            switchMode('auto');
+            console.log('✅ Switched to auto mode via function');
+        } else {
+            const autoBtn = document.querySelector('[onclick*="switchMode(\'auto\')"]');
+            if (autoBtn) {
+                autoBtn.click();
+                console.log('✅ Switched to auto mode via button click');
+            } else {
+                console.error('❌ Cannot find auto mode switcher');
+            }
         }
         
-        // Select risk
-        selectRisk(data.risk);
-        
-        // Auto-generate portfolio after settings are applied
+        // Step 2: Wait and set parameters
         setTimeout(() => {
-            generateAutoPortfolio();
-        }, 500);
+            const autoBudget = document.getElementById('autoBudget');
+            const autoTenure = document.getElementById('autoTenure');
+            const autoExpectedReturn = document.getElementById('autoExpectedReturn');
+            
+            if (autoBudget) {
+                autoBudget.value = data.budget;
+                console.log('✅ Budget:', data.budget);
+            }
+            if (autoTenure) {
+                autoTenure.value = data.tenure;
+                if (typeof updatePortfolioValue === 'function') updatePortfolioValue('autoTenure');
+                console.log('✅ Tenure:', data.tenure);
+            }
+            
+            const returnRate = data.risk === 'low' ? 8 : (data.risk === 'medium' ? 12 : 15);
+            if (autoExpectedReturn) {
+                autoExpectedReturn.value = returnRate;
+                if (typeof updatePortfolioValue === 'function') updatePortfolioValue('autoExpectedReturn');
+                console.log('✅ Return rate:', returnRate);
+            }
+            
+            // Step 3: Set risk
+            if (typeof selectRisk === 'function') {
+                selectRisk(data.risk);
+                console.log('✅ Risk selected:', data.risk);
+            } else {
+                const riskBtn = document.querySelector(`[data-risk="${data.risk}"]`);
+                if (riskBtn) {
+                    riskBtn.click();
+                    console.log('✅ Risk selected via button:', data.risk);
+                }
+            }
+            
+            // Step 4: GENERATE PORTFOLIO
+            setTimeout(() => {
+                console.log('🎯 GENERATING PORTFOLIO NOW...');
+                
+                if (typeof generateAutoPortfolio === 'function') {
+                    try {
+                        generateAutoPortfolio();
+                        console.log('✅✅✅ PORTFOLIO GENERATION CALLED!');
+                    } catch (e) {
+                        console.error('❌ Error calling generateAutoPortfolio:', e);
+                    }
+                } else {
+                    console.error('❌ generateAutoPortfolio function not found');
+                    const genBtn = document.querySelector('button[onclick*="generateAutoPortfolio"]');
+                    if (genBtn) {
+                        genBtn.click();
+                        console.log('✅ Clicked generate button as fallback');
+                    } else {
+                        console.error('❌ Generate button not found!');
+                        alert('⚠️ Please click "Generate Portfolio" button manually');
+                    }
+                }
+            }, 2000);
+        }, 600);
     }
 }
 
@@ -406,24 +419,19 @@ function showPortfolioSuccessMessage() {
         <div class="toast-content">
             <span class="toast-icon">✅</span>
             <div>
-                <strong>Portfolio Setup Complete!</strong>
-                <p>${portfolioOnboardingState.data.mode === 'manual' ? 'Start adding your favorite funds' : 'Your AI portfolio is ready'}</p>
+                <strong>Setup Complete!</strong>
+                <p>${portfolioOnboardingState.data.mode === 'manual' ? 'Start adding funds' : 'Generating portfolio...'}</p>
             </div>
         </div>
     `;
     document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 100);
-    
+    setTimeout(() => toast.classList.add('show'), 100);
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
 
-// Helper functions
 function selectPortfolioMode(mode) {
     portfolioOnboardingState.data.mode = mode;
     renderPortfolioOnboardingStep();
@@ -436,8 +444,6 @@ function selectPortfolioRisk(risk) {
 
 function updatePortfolioOnboardingValue(field, value) {
     portfolioOnboardingState.data[field] = parseFloat(value);
-    
-    // Update display
     const displayElement = document.querySelector('.amount-display, .duration-display');
     if (displayElement && field === 'budget') {
         displayElement.textContent = '₹' + formatCurrency(value) + '/month';
@@ -448,17 +454,18 @@ function updatePortfolioOnboardingValue(field, value) {
 
 function setPortfolioTenure(years) {
     portfolioOnboardingState.data.tenure = years;
-    document.getElementById('portfolioTenureInput').value = years;
-    updatePortfolioOnboardingValue('tenure', years);
+    const input = document.getElementById('portfolioTenureInput');
+    if (input) {
+        input.value = years;
+        updatePortfolioOnboardingValue('tenure', years);
+    }
 }
 
-// Add manual trigger function
 function restartPortfolioOnboarding() {
     portfolioOnboardingState.currentStep = 0;
     showPortfolioOnboarding();
 }
 
-// Initialize on DOM load
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePortfolioOnboarding);
 } else {
