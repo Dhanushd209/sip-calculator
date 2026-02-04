@@ -43,28 +43,37 @@ const RISK_MAPPING = {
 // ==========================================
 
 /**
- * Search for mutual funds - improved version based on working code
+ * Search for mutual funds - FIXED VERSION based on working example
  */
 async function searchFunds(query) {
     if (!query || query.length < 3) return [];
     
     const cacheKey = query.toLowerCase();
     if (apiCache.search[cacheKey]) {
+        console.log('Returning cached search results');
         return apiCache.search[cacheKey];
     }
     
     try {
-        const response = await fetch(`${MFAPI_BASE_URL}/search?q=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('Network error');
+        console.log('Searching for:', query);
+        
+        // Simple, direct API call like the working example
+        const response = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+            console.error('API response not OK:', response.status);
+            throw new Error('Network error');
+        }
         
         const results = await response.json();
+        console.log('API returned results:', results.length);
         
         if (!results || results.length === 0) {
+            console.log('No results found');
             return [];
         }
         
         // Enrich results with category and risk info
-        // Filter preferentially for Direct Growth but don't exclude all others
         const enrichedResults = results.map(fund => ({
             schemeCode: fund.schemeCode,
             schemeName: fund.schemeName,
@@ -86,8 +95,12 @@ async function searchFunds(query) {
         // Limit to top 15 results
         const limitedResults = enrichedResults.slice(0, 15);
         
+        // Cache the results
         apiCache.search[cacheKey] = limitedResults;
+        
+        console.log('Returning', limitedResults.length, 'enriched results');
         return limitedResults;
+        
     } catch (error) {
         console.error('Fund search error:', error);
         return [];
