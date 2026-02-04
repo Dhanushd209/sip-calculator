@@ -355,46 +355,39 @@ document.addEventListener('DOMContentLoaded', function() {
 // ==========================================
 // Mode Switching
 // ==========================================
-
 function switchMode(input) {
-    
     let mode;
 
-    // Determine mode safely (this is the only new part)
+    // Determine mode safely
     if (input && input.target) {
-        // Called from real button click
+        // Called from real button click (event object)
         mode = input.target.dataset.mode || input.target.getAttribute('data-mode');
-    }
-    else if (typeof input === 'string') {
-        // Called from tutorial / code like switchMode('auto')
+    } else if (typeof input === 'string') {
+        // Called from tutorial/code like switchMode('auto')
         mode = input.toLowerCase();
-    }
-    else {
+    } else {
         console.warn("switchMode called with invalid argument");
         return;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Everything below this line is YOUR original code — unchanged
-    // ─────────────────────────────────────────────────────────────
+    console.log('Switching to mode:', mode);
 
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.mode-btn[data-mode="${mode}"]`)?.classList.add('active');
-    document.getElementById('manualMode').classList.toggle('active', mode === 'manual');
-    document.getElementById('autoMode').classList.toggle('active', mode === 'auto');
-   
+    // Update currentPMode
     currentPMode = mode;
-   
-    const buttons = document.querySelectorAll('.mode-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-   
-    // This was crashing — we only run it when we have a real event
-    if (input && input.target) {
-        event.target.closest('.mode-btn').classList.add('active');
+
+    // Update mode buttons
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    const targetBtn = document.querySelector(`.mode-btn[data-mode="${mode}"]`);
+    if (targetBtn) {
+        targetBtn.classList.add('active');
     }
 
+    // Update mode content visibility
     document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(mode + 'Mode').classList.add('active');
+    const modeContent = document.getElementById(mode + 'Mode');
+    if (modeContent) {
+        modeContent.classList.add('active');
+    }
 }
 
 
@@ -828,6 +821,41 @@ function getCategoryReturn(category) {
         'International': 12
     };
     return categoryReturns[category] || 12;
+}
+
+/**
+ * Determine overall portfolio risk level based on fund composition
+ */
+function getRiskFromPortfolio(funds) {
+    if (!funds || funds.length === 0) return 'medium';
+    
+    // Risk scores for each category
+    const riskScores = {
+        'Debt': 1,
+        'Hybrid': 2,
+        'Large Cap': 3,
+        'Index': 3,
+        'Flexi Cap': 4,
+        'ELSS': 4,
+        'Mid Cap': 5,
+        'Thematic': 5,
+        'Small Cap': 6,
+        'International': 4
+    };
+    
+    // Calculate weighted average risk
+    let totalRiskScore = 0;
+    
+    funds.forEach(fund => {
+        const categoryRisk = riskScores[fund.category] || 3;
+        const weight = parseFloat(fund.allocation) || (100 / funds.length);
+        totalRiskScore += (categoryRisk * weight) / 100;
+    });
+    
+    // Map score to risk level
+    if (totalRiskScore <= 2) return 'low';
+    if (totalRiskScore <= 4) return 'medium';
+    return 'high';
 }
 
 function displayManualResults(totalInvested, totalCorpus, totalGains, weightedCAGR, tenure) {
