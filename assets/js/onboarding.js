@@ -12,6 +12,7 @@ let onboardingState = {
         risk: 'medium',
         targetCorpus: 1000000
     }
+    
 };
 
 // Check if user has completed onboarding
