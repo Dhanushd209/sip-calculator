@@ -1,6 +1,5 @@
 // ==========================================
-// Portfolio Analyzer Onboarding Wizard (FINAL WORKING VERSION)
-// With extensive debugging and fallback mechanisms
+// Portfolio Analyzer Onboarding Wizard (FIXED - SLIDER SYNC VERSION)
 // ==========================================
 
 let portfolioOnboardingState = {
@@ -155,14 +154,16 @@ function renderPortfolioOnboardingStep() {
                     </div>
                     <div class="input-card" style="margin-top: 24px;">
                         <label>Investment Duration</label>
-                        <input type="range" id="portfolioTenureInput" min="1" max="30" value="${portfolioOnboardingState.data.tenure}" oninput="updatePortfolioOnboardingValue('tenure', this.value)">
-                        <div class="duration-display"><span>${portfolioOnboardingState.data.tenure}</span> years</div>
+                        <input type="range" id="portfolioTenureSlider" min="1" max="30" value="${portfolioOnboardingState.data.tenure}" oninput="updatePortfolioOnboardingValue('tenure', this.value)">
+                        <div class="duration-display">
+                            <span id="portfolioTenureValue">${portfolioOnboardingState.data.tenure}</span> years
+                        </div>
                     </div>
                     <div class="quick-presets">
-                        <button onclick="setPortfolioTenure(5)" class="preset-btn">5 years</button>
-                        <button onclick="setPortfolioTenure(10)" class="preset-btn">10 years</button>
-                        <button onclick="setPortfolioTenure(15)" class="preset-btn">15 years</button>
-                        <button onclick="setPortfolioTenure(20)" class="preset-btn">20 years</button>
+                        <button onclick="setPortfolioOnboardingTenure(5)" class="preset-btn">5 years</button>
+                        <button onclick="setPortfolioOnboardingTenure(10)" class="preset-btn">10 years</button>
+                        <button onclick="setPortfolioOnboardingTenure(15)" class="preset-btn">15 years</button>
+                        <button onclick="setPortfolioOnboardingTenure(20)" class="preset-btn">20 years</button>
                     </div>
                 </div>
             `;
@@ -333,10 +334,9 @@ function applyPortfolioOnboardingSettings() {
             }, 500);
         }, 300);
     } else {
-        // AUTO MODE - CRITICAL SECTION
+        // AUTO MODE
         console.log('🤖 Auto Mode Selected - Generating Portfolio...');
         
-        // Step 1: Switch to auto mode
         if (typeof switchMode === 'function') {
             switchMode('auto');
             console.log('✅ Switched to auto mode via function');
@@ -350,7 +350,6 @@ function applyPortfolioOnboardingSettings() {
             }
         }
         
-        // Step 2: Wait and set parameters
         setTimeout(() => {
             const autoBudget = document.getElementById('autoBudget');
             const autoTenure = document.getElementById('autoTenure');
@@ -373,7 +372,6 @@ function applyPortfolioOnboardingSettings() {
                 console.log('✅ Return rate:', returnRate);
             }
             
-            // Step 3: Set risk
             if (typeof selectRisk === 'function') {
                 selectRisk(data.risk);
                 console.log('✅ Risk selected:', data.risk);
@@ -385,7 +383,6 @@ function applyPortfolioOnboardingSettings() {
                 }
             }
             
-            // Step 4: GENERATE PORTFOLIO
             setTimeout(() => {
                 console.log('🎯 GENERATING PORTFOLIO NOW...');
                 
@@ -444,20 +441,34 @@ function selectPortfolioRisk(risk) {
 
 function updatePortfolioOnboardingValue(field, value) {
     portfolioOnboardingState.data[field] = parseFloat(value);
-    const displayElement = document.querySelector('.amount-display, .duration-display');
-    if (displayElement && field === 'budget') {
-        displayElement.textContent = '₹' + formatCurrency(value) + '/month';
-    } else if (displayElement && field === 'tenure') {
-        displayElement.innerHTML = `<span>${value}</span> years`;
+    
+    if (field === 'budget') {
+        const displayElement = document.querySelector('.amount-display');
+        if (displayElement) {
+            displayElement.textContent = '₹' + formatCurrency(value) + '/month';
+        }
+    } else if (field === 'tenure') {
+        const displayElement = document.getElementById('portfolioTenureValue');
+        if (displayElement) {
+            displayElement.textContent = value;
+        }
     }
 }
 
-function setPortfolioTenure(years) {
+// ⭐ CRITICAL FIX: Proper tenure setter that updates BOTH slider and display
+function setPortfolioOnboardingTenure(years) {
     portfolioOnboardingState.data.tenure = years;
-    const input = document.getElementById('portfolioTenureInput');
-    if (input) {
-        input.value = years;
-        updatePortfolioOnboardingValue('tenure', years);
+    
+    // Update slider
+    const slider = document.getElementById('portfolioTenureSlider');
+    if (slider) {
+        slider.value = years;
+    }
+    
+    // Update display text
+    const displayElement = document.getElementById('portfolioTenureValue');
+    if (displayElement) {
+        displayElement.textContent = years;
     }
 }
 
