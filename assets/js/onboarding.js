@@ -12,7 +12,6 @@ let onboardingState = {
         risk: 'medium',
         targetCorpus: 1000000
     }
-    
 };
 
 // Check if user has completed onboarding
@@ -188,15 +187,15 @@ function renderOnboardingStep() {
                         <input type="range" id="onboardingDuration" min="1" max="30" value="${onboardingState.data.duration}" 
                                oninput="updateOnboardingValue('duration', this.value)">
                         <div class="duration-display">
-                            <span>${onboardingState.data.duration}</span> years
+                            <span id="onboardingDurationValue">${onboardingState.data.duration}</span> years
                         </div>
                     </div>
                     
                     <div class="quick-presets">
-                        <button onclick="setDuration(5)" class="preset-btn">5 years</button>
-                        <button onclick="setDuration(10)" class="preset-btn">10 years</button>
-                        <button onclick="setDuration(15)" class="preset-btn">15 years</button>
-                        <button onclick="setDuration(20)" class="preset-btn">20 years</button>
+                        <button onclick="setOnboardingDuration(5)" class="preset-btn">5 years</button>
+                        <button onclick="setOnboardingDuration(10)" class="preset-btn">10 years</button>
+                        <button onclick="setOnboardingDuration(15)" class="preset-btn">15 years</button>
+                        <button onclick="setOnboardingDuration(20)" class="preset-btn">20 years</button>
                     </div>
                 </div>
             `;
@@ -356,7 +355,6 @@ function previousStep() {
 }
 
 function skipOnboarding() {
-    // Just skip without confirmation
     closeOnboarding();
     localStorage.setItem('sipwise-onboarding-completed', 'true');
 }
@@ -456,21 +454,40 @@ function selectRiskType(risk) {
 function updateOnboardingValue(field, value) {
     onboardingState.data[field] = parseFloat(value);
     
-    // Update display
-    const displayElement = document.querySelector('.amount-display, .duration-display');
-    if (displayElement && field === 'budget') {
-        displayElement.textContent = '₹' + formatCurrency(value) + '/month';
-    } else if (displayElement && field === 'targetCorpus') {
-        displayElement.textContent = '₹' + formatCurrency(value);
-    } else if (displayElement && field === 'duration') {
-        displayElement.innerHTML = `<span>${value}</span> years`;
+    // Update display based on field
+    if (field === 'budget') {
+        const displayElement = document.querySelector('.amount-display');
+        if (displayElement) {
+            displayElement.textContent = '₹' + formatCurrency(value) + '/month';
+        }
+    } else if (field === 'targetCorpus') {
+        const displayElement = document.querySelector('.amount-display');
+        if (displayElement) {
+            displayElement.textContent = '₹' + formatCurrency(value);
+        }
+    } else if (field === 'duration') {
+        const displayElement = document.getElementById('onboardingDurationValue');
+        if (displayElement) {
+            displayElement.textContent = value;
+        }
     }
 }
 
-function setDuration(years) {
+// FIXED: Proper duration setter that updates both slider and display
+function setOnboardingDuration(years) {
     onboardingState.data.duration = years;
-    document.getElementById('onboardingDuration').value = years;
-    updateOnboardingValue('duration', years);
+    
+    // Update slider
+    const slider = document.getElementById('onboardingDuration');
+    if (slider) {
+        slider.value = years;
+    }
+    
+    // Update display text
+    const displayElement = document.getElementById('onboardingDurationValue');
+    if (displayElement) {
+        displayElement.textContent = years;
+    }
 }
 
 // Add manual trigger function for users who want to see it again
