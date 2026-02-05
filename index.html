@@ -109,6 +109,12 @@
                             <span class="value-display"><span id="durationDisplay">10</span> Years</span>
                         </div>
                         <input type="range" id="duration" min="1" max="40" value="10" oninput="updateValue('duration')">
+                        <div class="quick-presets">
+                            <button onclick="setDuration(5)" class="preset-btn">5 years</button>
+                            <button onclick="setDuration(10)" class="preset-btn">10 years</button>
+                            <button onclick="setDuration(15)" class="preset-btn">15 years</button>
+                            <button onclick="setDuration(20)" class="preset-btn">20 years</button>
+                        </div>
                     </div>
 
                     <!-- Expected Return Rate -->

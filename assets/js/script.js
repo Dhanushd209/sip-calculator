@@ -91,6 +91,11 @@ function updateDisplay(id) {
     calculate();
 }
 
+function setDuration(years) {
+    document.getElementById('duration').value = years;
+    updateValue('duration');
+}
+
 // ==========================================
 // Mode & Settings Functions
 // ==========================================
