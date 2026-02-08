@@ -54,7 +54,7 @@
 
     <div class="container">
         <div class="disclaimer">
-            <strong>⚠️ Important Disclaimer</strong>
+            <strong>Important Disclaimer</strong>
             Mutual fund investments are subject to market risks. NAV data is sourced from publicly available AMFI data
             via MFAPI.in. Returns are calculated based on historical NAVs. Past performance does not guarantee future
             results. Please consult a SEBI registered financial advisor before making investment decisions. This tool is
@@ -69,14 +69,12 @@
         <!-- Mode Selector -->
         <div class="mode-selector">
             <button class="mode-btn active" onclick="switchMode('manual')">
-                <div class="mode-icon">📊</div>
                 <div>
                     <h3>Manual Mode</h3>
                     <p>Analyze your own portfolio</p>
                 </div>
             </button>
             <button class="mode-btn" onclick="switchMode('auto')">
-                <div class="mode-icon">🤖</div>
                 <div>
                     <h3>Auto Mode</h3>
                     <p>Get AI-suggested portfolio</p>
@@ -90,7 +88,7 @@
                 <!-- Left Panel - Fund Selection -->
                 <div>
                     <div class="card">
-                        <div class="card-title">🔍 Build Your Portfolio</div>
+                        <div class="card-title">Build Your Portfolio</div>
 
                         <!-- Portfolio Settings -->
                         <div class="form-group">
@@ -128,7 +126,7 @@
 
                         <button class="btn btn-secondary" onclick="analyzeManualPortfolio()"
                             style="width: 100%; margin-top: 12px;">
-                            📊 Analyze Portfolio
+                            Analyze Portfolio
                         </button>
                     </div>
                 </div>
@@ -136,7 +134,7 @@
                 <!-- Right Panel - Analysis Results -->
                 <div>
                     <div class="card">
-                        <div class="card-title">📈 Portfolio Analysis</div>
+                        <div class="card-title">Portfolio Analysis</div>
 
                         <div id="portfolioResults" class="portfolio-results">
                             <div class="empty-state">
@@ -148,7 +146,7 @@
                     </div>
 
                     <div class="card" id="detailedAnalysis" style="margin-top: 20px; display: none;">
-                        <div class="card-title">📊 Detailed Breakdown</div>
+                        <div class="card-title">Detailed Breakdown</div>
                         <div id="detailedResults"></div>
                     </div>
                 </div>
@@ -161,7 +159,7 @@
                 <!-- Left Panel - Preferences -->
                 <div>
                     <div class="card">
-                        <div class="card-title">🎯 Your Investment Profile</div>
+                        <div class="card-title">Your Investment Profile</div>
 
                         <div class="form-group">
                             <label>Monthly Investment Budget</label>
@@ -234,7 +232,7 @@
 
                         <button class="btn btn-primary" onclick="generateAutoPortfolio()"
                             style="width: 100%; margin-top: 24px;">
-                            🤖 Generate Portfolio
+                            Generate Portfolio
                         </button>
                     </div>
                 </div>
@@ -255,7 +253,7 @@
                     </div>
 
                     <div class="card" id="autoDetailedAnalysis" style="margin-top: 20px; display: none;">
-                        <div class="card-title">💡 Why These Funds?</div>
+                        <div class="card-title">Why These Funds?</div>
                         <div id="autoRationale"></div>
                     </div>
                 </div>
