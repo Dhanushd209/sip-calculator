@@ -1,5 +1,5 @@
 // ==========================================
-// Portfolio Analyzer Onboarding Wizard (FIXED - SLIDER SYNC VERSION)
+// Portfolio Analyzer Onboarding Wizard
 // ==========================================
 
 let portfolioOnboardingState = {
@@ -455,7 +455,7 @@ function updatePortfolioOnboardingValue(field, value) {
     }
 }
 
-// ⭐ CRITICAL FIX: Proper tenure setter that updates BOTH slider and display
+// FIXED: Proper tenure setter that updates BOTH slider and display
 function setPortfolioOnboardingTenure(years) {
     portfolioOnboardingState.data.tenure = years;
     
@@ -477,6 +477,115 @@ function restartPortfolioOnboarding() {
     showPortfolioOnboarding();
 }
 
+// Utility function (reused from script.js for consistency)
+function formatCurrency(num) {
+    const n = parseFloat(num);
+    if (n >= 10000000) {
+        return (n / 10000000).toFixed(2) + ' Cr';
+    } else if (n >= 100000) {
+        return (n / 100000).toFixed(2) + ' L';
+    } else {
+        return n.toLocaleString('en-IN');
+    }
+}
+
+function formatNumber(num) {
+    return Math.round(num).toLocaleString('en-IN');
+}
+
+// Add tip-card styles
+const tipStyles = document.createElement('style');
+tipStyles.textContent = `
+.tips-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.tip-card {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.tip-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.tip-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.tip-card h4 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.tip-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.tip-example {
+    font-size: 12px;
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.mode-features {
+    list-style: none;
+    padding: 0;
+    margin-top: 12px;
+    text-align: left;
+}
+
+.mode-features li {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.mode-features li:last-child {
+    border-bottom: none;
+}
+
+.mode-features li::before {
+    content: "✓ ";
+    color: var(--success);
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+.info-box {
+    background: var(--surface);
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.info-box strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+`;
+document.head.appendChild(tipStyles);
+
+// Initialize on DOM load
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePortfolioOnboarding);
 } else {

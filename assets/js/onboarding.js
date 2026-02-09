@@ -1,5 +1,5 @@
 // ==========================================
-// Onboarding Wizard
+// Onboarding Wizard for Index.html (Calculator Page)
 // ==========================================
 
 let onboardingState = {

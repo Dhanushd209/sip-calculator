@@ -39,12 +39,95 @@ const RISK_MAPPING = {
 };
 
 // ==========================================
+// Caching System with Freshness
+// ==========================================
+
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+function getCachedData(key) {
+    try {
+        const cached = localStorage.getItem(`mf_cache_${key}`);
+        if (!cached) return null;
+        
+        const data = JSON.parse(cached);
+        const now = Date.now();
+        
+        if (now - data.timestamp > CACHE_DURATION) {
+            localStorage.removeItem(`mf_cache_${key}`);
+            return null;
+        }
+        
+        return data.value;
+    } catch (error) {
+        console.error('Cache read error:', error);
+        return null;
+    }
+}
+
+function setCachedData(key, value) {
+    try {
+        const data = {
+            value: value,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(`mf_cache_${key}`, JSON.stringify(data));
+    } catch (error) {
+        console.error('Cache write error:', error);
+    }
+}
+
+function getCacheFreshness(key) {
+    try {
+        const cached = localStorage.getItem(`mf_cache_${key}`);
+        if (!cached) return null;
+        
+        const data = JSON.parse(cached);
+        const now = Date.now();
+        const age = now - data.timestamp;
+        const hoursOld = Math.floor(age / (60 * 60 * 1000));
+        
+        return {
+            age: age,
+            hoursOld: hoursOld,
+            isStale: age > CACHE_DURATION,
+            percentage: Math.min(100, (age / CACHE_DURATION) * 100)
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+function showDataFreshnessIndicator(containerId) {
+    const freshness = getCacheFreshness('nav_data_general');
+    if (!freshness) return;
+    
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const freshnessHTML = `
+        <div class="data-freshness-indicator" style="
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: ${freshness.hoursOld < 12 ? '#D1FAE5' : (freshness.hoursOld < 20 ? '#FEF3C7' : '#FEE2E2')};
+            color: ${freshness.hoursOld < 12 ? '#065F46' : (freshness.hoursOld < 20 ? '#92400E' : '#991B1B')};
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        ">
+            <span>${freshness.hoursOld < 12 ? '🟢' : (freshness.hoursOld < 20 ? '🟡' : '🔴')}</span>
+            <span>Data: ${freshness.hoursOld}h old ${freshness.hoursOld < 12 ? '(Fresh)' : (freshness.hoursOld < 20 ? '(Good)' : '(Stale)')}</span>
+        </div>
+    `;
+    
+    container.innerHTML = freshnessHTML;
+}
+
+// ==========================================
 // API Helper Functions
 // ==========================================
 
-/**
- * Search for mutual funds - FIXED VERSION based on working example
- */
 async function searchFunds(query) {
     if (!query || query.length < 3) return [];
 
@@ -57,7 +140,6 @@ async function searchFunds(query) {
     try {
         console.log('Searching for:', query);
 
-        // Simple, direct API call like the working example
         const response = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(query)}`);
 
         if (!response.ok) {
@@ -73,7 +155,6 @@ async function searchFunds(query) {
             return [];
         }
 
-        // Enrich results with category and risk info
         const enrichedResults = results.map(fund => ({
             schemeCode: fund.schemeCode,
             schemeName: fund.schemeName,
@@ -83,7 +164,6 @@ async function searchFunds(query) {
             isGrowth: fund.schemeName.toLowerCase().includes('growth')
         }));
 
-        // Sort: Direct Growth first, then Direct, then others
         enrichedResults.sort((a, b) => {
             if (a.isDirect && a.isGrowth && !(b.isDirect && b.isGrowth)) return -1;
             if (!(a.isDirect && a.isGrowth) && b.isDirect && b.isGrowth) return 1;
@@ -92,10 +172,7 @@ async function searchFunds(query) {
             return 0;
         });
 
-        // Limit to top 15 results
         const limitedResults = enrichedResults.slice(0, 15);
-
-        // Cache the results
         apiCache.search[cacheKey] = limitedResults;
 
         console.log('Returning', limitedResults.length, 'enriched results');
@@ -371,12 +448,9 @@ document.addEventListener('DOMContentLoaded', function () {
 function switchMode(input) {
     let mode;
 
-    // Determine mode safely
     if (input && input.target) {
-        // Called from real button click (event object)
         mode = input.target.dataset.mode || input.target.getAttribute('data-mode');
     } else if (typeof input === 'string') {
-        // Called from tutorial/code like switchMode('auto')
         mode = input.toLowerCase();
     } else {
         console.warn("switchMode called with invalid argument");
@@ -385,24 +459,20 @@ function switchMode(input) {
 
     console.log('Switching to mode:', mode);
 
-    // Update currentPMode
     currentPMode = mode;
 
-    // Update mode buttons
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
     const targetBtn = document.querySelector(`.mode-btn[data-mode="${mode}"]`);
     if (targetBtn) {
         targetBtn.classList.add('active');
     }
 
-    // Update mode content visibility
     document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
     const modeContent = document.getElementById(mode + 'Mode');
     if (modeContent) {
         modeContent.classList.add('active');
     }
 }
-
 
 // ==========================================
 // Portfolio Management
@@ -436,7 +506,6 @@ function renderFundsList() {
         fundListContainer.appendChild(fundCard);
     });
 
-    // Update budget automatically
     updateTotalBudget();
 }
 
@@ -535,12 +604,10 @@ function showFundSearchModal() {
     `;
     document.body.appendChild(modal);
 
-    // Focus on search input
     setTimeout(() => {
         document.getElementById('fundSearchInput').focus();
     }, 100);
 
-    // Add Enter key support
     document.getElementById('fundSearchInput').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             searchFundsInModal();
@@ -634,10 +701,9 @@ async function addFundToPortfolioBySchemeCode(schemeCode) {
     }
 
     if (currentPortfolio.funds.find(f => f.schemeCode === schemeCode)) {
-        return; // Already added
+        return;
     }
 
-    // Show inline loading
     const resultsDiv = document.getElementById('fundSearchResults');
     const originalContent = resultsDiv.innerHTML;
     resultsDiv.innerHTML = `
@@ -670,16 +736,13 @@ async function addFundToPortfolioBySchemeCode(schemeCode) {
         currentPortfolio.funds.push(newFund);
         renderFundsList();
 
-        // Auto-analyze after adding fund
         analyzeManualPortfolio();
 
-        // Update modal header
         const modalHeader = document.querySelector('.modal-header h3');
         if (modalHeader) {
             modalHeader.textContent = `🔍 Search & Add Funds (${currentPortfolio.funds.length}/10)`;
         }
 
-        // Restore search results (keep modal open)
         searchFundsInModal();
 
     } catch (error) {
@@ -694,11 +757,9 @@ function removeFundFromPortfolio(index) {
         currentPortfolio.funds.splice(index, 1);
         renderFundsList();
 
-        // Auto-analyze after removal
         if (currentPortfolio.funds.length > 0) {
             analyzeManualPortfolio();
         } else {
-            // Clear results if no funds
             document.getElementById('portfolioResults').innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📋</div>
@@ -747,7 +808,6 @@ function updateTotalBudget() {
         budgetInput.value = totalSIP;
     }
 
-    // Update allocations as percentages
     currentPortfolio.funds.forEach(fund => {
         fund.allocation = ((fund.sipAmount / totalSIP) * 100).toFixed(2);
     });
@@ -836,13 +896,9 @@ function getCategoryReturn(category) {
     return categoryReturns[category] || 12;
 }
 
-/**
- * Determine overall portfolio risk level based on fund composition
- */
 function getRiskFromPortfolio(funds) {
     if (!funds || funds.length === 0) return 'medium';
 
-    // Risk scores for each category
     const riskScores = {
         'Debt': 1,
         'Hybrid': 2,
@@ -856,7 +912,6 @@ function getRiskFromPortfolio(funds) {
         'International': 4
     };
 
-    // Calculate weighted average risk
     let totalRiskScore = 0;
 
     funds.forEach(fund => {
@@ -865,7 +920,6 @@ function getRiskFromPortfolio(funds) {
         totalRiskScore += (categoryRisk * weight) / 100;
     });
 
-    // Map score to risk level
     if (totalRiskScore <= 2) return 'low';
     if (totalRiskScore <= 4) return 'medium';
     return 'high';
@@ -963,7 +1017,7 @@ function displayManualResults(totalInvested, totalCorpus, totalGains, weightedCA
         tenure,
         risk,
         totalBudget
-    )
+    );
 }
 
 // ==========================================
@@ -986,13 +1040,9 @@ function toggleNFO() {
     checkbox.checked = !checkbox.checked;
 }
 
-/**
- * Main function to generate auto portfolio - FIXED VERSION
- */
 async function generateAutoPortfolio() {
     console.log('🤖 generateAutoPortfolio called');
 
-    // Get input values
     const budget = parseFloat(document.getElementById('autoBudget').value) || 10000;
     const tenure = parseInt(document.getElementById('autoTenure').value) || 10;
     const expectedReturn = parseFloat(document.getElementById('autoExpectedReturn').value) || 12;
@@ -1002,7 +1052,6 @@ async function generateAutoPortfolio() {
 
     console.log('📊 Portfolio parameters:', { budget, tenure, expectedReturn, style, selectedRisk, includeTax, includeNFO });
 
-    // Show loading state
     const resultsDiv = document.getElementById('autoPortfolioResults');
     resultsDiv.innerHTML = `
         <div style="text-align: center; padding: 60px 20px;">
@@ -1013,7 +1062,6 @@ async function generateAutoPortfolio() {
     `;
 
     try {
-        // Generate portfolio
         console.log('🔍 Creating diversified portfolio...');
         const portfolio = await createDiversifiedPortfolio(budget, selectedRisk, style, includeTax, includeNFO);
 
@@ -1032,7 +1080,6 @@ async function generateAutoPortfolio() {
 
         console.log('✅ Portfolio generated with', portfolio.length, 'funds');
 
-        // Calculate returns
         const totalInvested = budget * 12 * tenure;
         let totalCorpus = 0;
 
@@ -1052,7 +1099,6 @@ async function generateAutoPortfolio() {
 
         console.log('💰 Total corpus:', totalCorpus, 'Weighted CAGR:', weightedCAGR);
 
-        // Display results
         displayAutoResults(portfolio, totalInvested, totalCorpus, weightedCAGR, tenure, selectedRisk);
 
     } catch (error) {
@@ -1067,7 +1113,6 @@ async function generateAutoPortfolio() {
         `;
     }
 }
-
 
 function getRoleDescription(category) {
     const roles = {
@@ -1190,16 +1235,11 @@ function displayAutoResults(portfolio, totalInvested, totalCorpus, weightedCAGR,
     );
 }
 
-
-/**
- * Create diversified portfolio - COMPLETELY REWRITTEN & TESTED
- */
 async function createDiversifiedPortfolio(budget, risk, style, includeTax, includeNFO) {
     console.log('🎯 Creating portfolio for risk:', risk);
 
     let portfolio = [];
 
-    // Define allocations based on risk profile
     let allocations = {};
 
     if (risk === 'low') {
@@ -1216,7 +1256,7 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
             'Mid Cap': 15,
             'Index': 5
         };
-    } else { // high
+    } else {
         allocations = {
             'Large Cap': 25,
             'Mid Cap': 30,
@@ -1226,16 +1266,14 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
         };
     }
 
-    // Adjust based on style slider
-    if (style < 33) { // Conservative
+    if (style < 33) {
         allocations['Debt'] = (allocations['Debt'] || 0) + 10;
         allocations['Small Cap'] = Math.max(0, (allocations['Small Cap'] || 0) - 10);
-    } else if (style > 66) { // Aggressive
+    } else if (style > 66) {
         allocations['Small Cap'] = (allocations['Small Cap'] || 0) + 10;
         allocations['Debt'] = Math.max(0, (allocations['Debt'] || 0) - 10);
     }
 
-    // Add ELSS if tax saving requested
     if (includeTax) {
         allocations['ELSS'] = 20;
         allocations['Large Cap'] = Math.max(0, (allocations['Large Cap'] || 0) - 10);
@@ -1244,7 +1282,6 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
 
     console.log('📊 Target allocations:', allocations);
 
-    // HARDCODED TOP FUNDS - This ensures portfolio ALWAYS generates
     const topFundsByCategoryWithBackups = {
         'Debt': [
             { code: '118825', name: 'HDFC Corporate Bond Fund', search: 'hdfc corporate bond direct growth' },
@@ -1288,7 +1325,6 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
         ]
     };
 
-    // Build portfolio using hardcoded funds with dynamic search fallback
     for (const [category, allocation] of Object.entries(allocations)) {
         if (allocation === 0) continue;
 
@@ -1298,7 +1334,6 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
         const categoryFunds = topFundsByCategoryWithBackups[category];
 
         if (categoryFunds && categoryFunds.length > 0) {
-            // Try hardcoded funds first
             for (const fundOption of categoryFunds) {
                 try {
                     console.log(`   Trying hardcoded fund: ${fundOption.name}`);
@@ -1312,7 +1347,6 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
                 }
             }
 
-            // If hardcoded failed, try search as fallback
             if (!fundDetails && categoryFunds[0].search) {
                 try {
                     console.log(`   Searching for: ${categoryFunds[0].search}`);
@@ -1345,26 +1379,6 @@ async function createDiversifiedPortfolio(budget, risk, style, includeTax, inclu
 
     console.log('🎉 Portfolio created with', portfolio.length, 'funds');
     return portfolio;
-}
-
-
-/**
- * Get role description for category
- */
-function getRoleDescription(category) {
-    const roles = {
-        'Debt': 'Stability & Capital Protection',
-        'Hybrid': 'Balanced Growth & Stability',
-        'Large Cap': 'Stable Growth',
-        'Mid Cap': 'High Growth Potential',
-        'Small Cap': 'Aggressive Growth',
-        'Flexi Cap': 'Diversified Exposure',
-        'ELSS': 'Tax Saving & Growth',
-        'Index': 'Market Returns',
-        'Thematic': 'Sector-Focused Growth',
-        'International': 'Global Diversification'
-    };
-    return roles[category] || 'Diversification';
 }
 
 // ==========================================
@@ -1469,6 +1483,268 @@ function createAutoAllocationChart(portfolio) {
 }
 
 // ==========================================
+// Portfolio Enhancements
+// ==========================================
+
+function generatePortfolioExplanation(funds, risk, totalBudget) {
+    const categories = {};
+    let totalAllocation = 0;
+    
+    funds.forEach(fund => {
+        const category = fund.category;
+        if (!categories[category]) {
+            categories[category] = 0;
+        }
+        categories[category] += parseFloat(fund.allocation);
+        totalAllocation += parseFloat(fund.allocation);
+    });
+    
+    const sortedCategories = Object.entries(categories)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, alloc]) => ({ category: cat, allocation: alloc }));
+    
+    let explanation = '';
+    
+    if (risk === 'low') {
+        explanation += `Your portfolio prioritizes <strong>stability and capital protection</strong> `;
+    } else if (risk === 'medium') {
+        explanation += `Your portfolio follows a <strong>balanced approach</strong> `;
+    } else {
+        explanation += `Your portfolio is designed for <strong>aggressive growth</strong> `;
+    }
+    
+    if (sortedCategories.length > 0) {
+        const top = sortedCategories[0];
+        explanation += `by allocating <strong>${top.allocation.toFixed(0)}%</strong> to <strong>${top.category}</strong>`;
+        
+        if (sortedCategories.length > 1) {
+            const second = sortedCategories[1];
+            explanation += ` and <strong>${second.allocation.toFixed(0)}%</strong> to <strong>${second.category}</strong>`;
+        }
+        explanation += '. ';
+    }
+    
+    if (funds.length >= 5) {
+        explanation += `With <strong>${funds.length} funds</strong>, your portfolio is <strong>well-diversified</strong> across multiple categories and fund houses. `;
+    } else if (funds.length >= 3) {
+        explanation += `Your <strong>${funds.length}-fund portfolio</strong> provides <strong>good diversification</strong>. `;
+    } else {
+        explanation += `Consider adding more funds for <strong>better diversification</strong>. `;
+    }
+    
+    const equityAllocation = (categories['Large Cap'] || 0) + (categories['Mid Cap'] || 0) + 
+                             (categories['Small Cap'] || 0) + (categories['Flexi Cap'] || 0) + 
+                             (categories['ELSS'] || 0);
+    
+    if (equityAllocation > 60) {
+        explanation += `Tax-efficiency is optimized with <strong>${equityAllocation.toFixed(0)}% equity allocation</strong>, suitable for long-term wealth creation with favorable LTCG treatment. `;
+    } else if (categories['ELSS'] > 0) {
+        explanation += `Your portfolio includes <strong>ELSS funds (${categories['ELSS'].toFixed(0)}%)</strong> for <strong>tax savings under Section 80C</strong>. `;
+    }
+    
+    if (categories['Debt'] > 40) {
+        explanation += `The high debt allocation (<strong>${categories['Debt'].toFixed(0)}%</strong>) provides <strong>stability and regular income</strong>, reducing overall portfolio volatility. `;
+    }
+    
+    if (categories['Small Cap'] > 20) {
+        explanation += `Your <strong>${categories['Small Cap'].toFixed(0)}% allocation to Small Cap</strong> funds offers high growth potential but requires a <strong>long investment horizon (7+ years)</strong>. `;
+    }
+    
+    if (risk === 'high') {
+        explanation += `This aggressive strategy is ideal for investors with <strong>high risk tolerance</strong> and a <strong>long-term horizon of ${Math.max(10, funds.length * 2)}+ years</strong>.`;
+    } else if (risk === 'medium') {
+        explanation += `This balanced strategy suits investors seeking <strong>moderate growth with controlled risk</strong> over a <strong>${Math.max(5, funds.length * 1.5)}+ year horizon</strong>.`;
+    } else {
+        explanation += `This conservative strategy is suitable for <strong>risk-averse investors</strong> or those with <strong>shorter investment horizons</strong>.`;
+    }
+    
+    return explanation;
+}
+
+function displayPortfolioExplanation(funds, risk, totalBudget, containerId) {
+    const explanation = generatePortfolioExplanation(funds, risk, totalBudget);
+    const container = document.getElementById(containerId);
+    
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="portfolio-explanation" style="
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05));
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            margin: 20px 0;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <span style="font-size: 24px;">💡</span>
+                <h3 style="margin: 0; font-size: 18px; color: var(--text);">Portfolio Strategy Explanation</h3>
+            </div>
+            <p style="
+                font-size: 15px;
+                line-height: 1.8;
+                color: var(--text);
+                margin: 0;
+            ">${explanation}</p>
+        </div>
+    `;
+}
+
+function calculateHistoricalMetrics(funds, tenure) {
+    const returns = {
+        '1Y': [],
+        '3Y': [],
+        '5Y': []
+    };
+    
+    funds.forEach(fund => {
+        if (fund.cagr1y) returns['1Y'].push(fund.cagr1y);
+        if (fund.cagr3y) returns['3Y'].push(fund.cagr3y);
+        if (fund.cagr5y) returns['5Y'].push(fund.cagr5y);
+    });
+    
+    const stats = {};
+    
+    for (const [period, values] of Object.entries(returns)) {
+        if (values.length === 0) continue;
+        
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        const sorted = [...values].sort((a, b) => a - b);
+        const best = sorted[sorted.length - 1];
+        const worst = sorted[0];
+        const median = sorted[Math.floor(sorted.length / 2)];
+        
+        stats[period] = {
+            average: avg,
+            best: best,
+            worst: worst,
+            median: median,
+            range: best - worst
+        };
+    }
+    
+    return stats;
+}
+
+function displayHistoricalBacktest(funds, tenure, containerId) {
+    const stats = calculateHistoricalMetrics(funds, tenure);
+    const container = document.getElementById(containerId);
+    
+    if (!container || Object.keys(stats).length === 0) return;
+    
+    let backtestHTML = `
+        <div class="historical-backtest" style="
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            margin: 20px 0;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <span style="font-size: 24px;">📊</span>
+                <h3 style="margin: 0; font-size: 18px; color: var(--text);">Historical Performance Analysis</h3>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Based on actual historical returns of selected funds. Past performance is not indicative of future results.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+    `;
+    
+    for (const [period, data] of Object.entries(stats)) {
+        const periodLabel = period === '1Y' ? '1 Year' : (period === '3Y' ? '3 Years' : '5 Years');
+        
+        backtestHTML += `
+            <div style="
+                background: var(--background);
+                padding: 16px;
+                border-radius: 8px;
+                border: 1px solid var(--border);
+            ">
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">
+                    ${periodLabel} CAGR
+                </div>
+                
+                <div style="margin: 12px 0;">
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Best</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--success); font-family: 'JetBrains Mono', monospace;">
+                        ${data.best.toFixed(1)}%
+                    </div>
+                </div>
+                
+                <div style="margin: 12px 0;">
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Average</div>
+                    <div style="font-size: 18px; font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace;">
+                        ${data.average.toFixed(1)}%
+                    </div>
+                </div>
+                
+                <div style="margin: 12px 0;">
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Worst</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--danger); font-family: 'JetBrains Mono', monospace;">
+                        ${data.worst.toFixed(1)}%
+                    </div>
+                </div>
+                
+                <div style="
+                    margin-top: 12px;
+                    padding-top: 12px;
+                    border-top: 1px solid var(--border);
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                ">
+                    Range: <strong style="color: var(--text);">${data.range.toFixed(1)}%</strong>
+                </div>
+            </div>
+        `;
+    }
+    
+    backtestHTML += `
+            </div>
+            
+            <div style="
+                margin-top: 16px;
+                padding: 12px;
+                background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 146, 60, 0.05));
+                border-radius: 8px;
+                border-left: 3px solid var(--warning);
+            ">
+                <div style="font-size: 13px; color: var(--text); line-height: 1.6;">
+                    <strong>📈 Interpretation:</strong> Your portfolio's funds have historically delivered between 
+                    <strong>${stats['5Y'] ? stats['5Y'].worst.toFixed(1) : stats['3Y'] ? stats['3Y'].worst.toFixed(1) : stats['1Y'].worst.toFixed(1)}%</strong> 
+                    to 
+                    <strong>${stats['5Y'] ? stats['5Y'].best.toFixed(1) : stats['3Y'] ? stats['3Y'].best.toFixed(1) : stats['1Y'].best.toFixed(1)}%</strong> 
+                    CAGR. Plan for volatility and maintain a long-term investment horizon.
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = backtestHTML;
+}
+
+function displayEnhancedPortfolioResults(funds, totalInvested, totalCorpus, weightedCAGR, tenure, risk, totalBudget) {
+    displayPortfolioExplanation(funds, risk, totalBudget, 'portfolioExplanation');
+    displayHistoricalBacktest(funds, tenure, 'historicalBacktest');
+    showDataFreshnessIndicator('dataFreshness');
+}
+
+function addEnhancementContainers() {
+    if (document.getElementById('portfolioExplanation')) return;
+    
+    const resultsDiv = document.getElementById('portfolioResults');
+    if (!resultsDiv) return;
+    
+    const enhancementHTML = `
+        <div id="dataFreshness" style="margin: 12px 0;"></div>
+        <div id="portfolioExplanation"></div>
+        <div id="historicalBacktest"></div>
+    `;
+    
+    resultsDiv.insertAdjacentHTML('afterend', enhancementHTML);
+}
+
+// ==========================================
 // Utility Functions
 // ==========================================
 
@@ -1505,3 +1781,12 @@ style.textContent = `
 }
 `;
 document.head.appendChild(style);
+
+// Initialize enhancement containers when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(addEnhancementContainers, 1000);
+    });
+} else {
+    setTimeout(addEnhancementContainers, 1000);
+}
