@@ -1,0 +1,86 @@
+# ============================================================================
+# Mutual Fund Data Pipeline - Python Dependencies
+# ============================================================================
+
+# ============================================================================
+# Core Dependencies
+# ============================================================================
+
+# Database ORM (PostgreSQL migration ready)
+SQLAlchemy==2.0.25
+# Database drivers
+psycopg2-binary==2.9.9  # PostgreSQL driver (for production)
+
+# API Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0  # ASGI server
+
+# Data Validation
+pydantic==2.5.3
+
+# HTTP Client
+requests==2.31.0
+
+# Task Scheduling
+APScheduler==3.10.4
+
+# ============================================================================
+# Utilities
+# ============================================================================
+
+# Date/time utilities
+python-dateutil==2.8.2
+
+# Logging
+python-json-logger==2.0.7  # Structured logging for production
+
+# ============================================================================
+# Development Dependencies (Optional)
+# ============================================================================
+
+# Testing
+pytest==7.4.4
+pytest-cov==4.1.0
+
+# Code Quality
+black==24.1.1  # Code formatter
+flake8==7.0.0  # Linter
+mypy==1.8.0    # Type checker
+
+# ============================================================================
+# Production Deployment (Optional)
+# ============================================================================
+
+# Process Manager
+gunicorn==21.2.0  # WSGI server for production
+
+# Monitoring
+prometheus-client==0.19.0  # Metrics export
+
+# ============================================================================
+# Installation Instructions
+# ============================================================================
+
+# 1. Create virtual environment:
+#    python -m venv venv
+#    source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 2. Install dependencies:
+#    pip install -r requirements.txt
+
+# 3. Run database migrations:
+#    python models.py
+
+# 4. Ingest initial data:
+#    python ingestion.py
+
+# 5. Calculate metrics:
+#    python calculations.py
+
+# 6. Start API server:
+#    python api.py
+#    # OR for production:
+#    gunicorn -w 4 -k uvicorn.workers.UvicornWorker api:app
+
+# 7. Start scheduler (optional):
+#    python scheduler.py
