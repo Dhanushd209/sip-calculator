@@ -1,0 +1,28 @@
+# Robots.txt for SIPWise - Mutual Fund Calculator
+# Updated: 2026-02-11
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://sipwise-phi.vercel.app/sitemap.xml
+
+# Disallow unnecessary paths
+Disallow: /api/
+Disallow: /assets/js/
+Disallow: /assets/css/
+Disallow: /*.json$
+Disallow: /*.js$
+Disallow: /*.css$
+
+# Allow main pages (explicit)
+Allow: /index.html
+Allow: /portfolio.html
+Allow: /pricing.html
+Allow: /about.html
+Allow: /privacy.html
+Allow: /contact.html
+
+# Crawl delay (be nice to servers)
+Crawl-delay: 1
