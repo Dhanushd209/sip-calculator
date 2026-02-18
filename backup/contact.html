@@ -1,86 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
-    <!-- Primary SEO -->
-    <title>Contact Us – SIPWise</title>
-    <meta name="description"
-        content="Have questions, feedback, or found a bug? Get in touch with the SIPWise team. We'd love to hear from you.">
-    <meta name="keywords" content="contact SIPWise, SIPWise support, SIP calculator feedback, report bug SIPWise">
-    <meta name="author" content="SIPWise">
-    <meta name="robots" content="index, follow">
-    <meta name="language" content="en-IN">
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://sipwise-phi.vercel.app/contact.html">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
-    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.ico">
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="SIPWise">
-    <meta property="og:title" content="Contact SIPWise">
-    <meta property="og:description" content="Questions, feedback, or found a bug? Get in touch with the SIPWise team.">
-    <meta property="og:url" content="https://sipwise-phi.vercel.app/contact.html">
-    <meta property="og:image" content="https://sipwise-phi.vercel.app/assets/images/og-banner.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Contact SIPWise">
-    <meta property="og:locale" content="en_IN">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Contact SIPWise">
-    <meta name="twitter:description" content="Questions, feedback, or found a bug? Get in touch with the SIPWise team.">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-        {
-        "@context": "https://schema.org",
-        "@type": "ContactPage",
-        "name": "Contact SIPWise",
-        "description": "Contact page for SIPWise - Free SIP Calculator",
-        "url": "https://sipwise-phi.vercel.app/contact.html",
-        "inLanguage": "en-IN",
-        "isPartOf": {
-            "@type": "WebSite",
-            "name": "SIPWise",
-            "url": "https://sipwise-phi.vercel.app"
-        }
-        }
-    </script>
-
+    <meta name="description" content="Contact SIPWise - We'd love to hear from you. Send feature requests, bug reports, or partnership ideas.">
+    
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-8RSFJGFF8B"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-8RSFJGFF8B');
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-8RSFJGFF8B');
     </script>
-
+    
     <link rel="icon" href="./assets/images/favicon.ico" type="image/x-icon">
     <title>Contact - SIPWise | Plan your SIP. Predict your future.</title>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
-        rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
 </head>
-
 <body data-theme="light">
     <header>
         <div class="header-content">
             <h1>
-                <a href="index.html"
-                    style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+                <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
                     <div class="logo">₹</div>
                     SIPWise
                 </a>
@@ -108,23 +52,21 @@
             <div class="contact-main">
                 <div class="card">
                     <h2>Send Us a Message</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Fill out the form below and we'll get
-                        back to you within 48 hours.</p>
-
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Fill out the form below and we'll get back to you within 48 hours.</p>
+                    
                     <form id="contactForm" class="contact-form">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="name">Name (Optional)</label>
                                 <input type="text" id="name" name="name" placeholder="Your name">
                             </div>
-
+                            
                             <div class="form-group">
                                 <label for="email">Email *</label>
-                                <input type="email" id="email" name="email" placeholder="your.email@example.com"
-                                    required>
+                                <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
                             </div>
                         </div>
-
+                        
                         <div class="form-group">
                             <label for="category">Category *</label>
                             <select id="category" name="category" required>
@@ -137,19 +79,17 @@
                                 <option value="other">📌 Other</option>
                             </select>
                         </div>
-
+                        
                         <div class="form-group">
                             <label for="subject">Subject *</label>
-                            <input type="text" id="subject" name="subject"
-                                placeholder="Brief description of your message" required>
+                            <input type="text" id="subject" name="subject" placeholder="Brief description of your message" required>
                         </div>
-
+                        
                         <div class="form-group">
                             <label for="message">Message *</label>
-                            <textarea id="message" name="message" rows="8" placeholder="Tell us more..."
-                                required></textarea>
+                            <textarea id="message" name="message" rows="8" placeholder="Tell us more..." required></textarea>
                         </div>
-
+                        
                         <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
                     </form>
 
@@ -166,32 +106,27 @@
 
                 <div class="card" style="margin-top: 24px;">
                     <h2>Frequently Asked Questions</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 20px;">Before reaching out, check if your
-                        question is already answered:</p>
-
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">Before reaching out, check if your question is already answered:</p>
+                    
                     <div class="faq-list">
                         <div class="faq-item-contact">
                             <h3>How do I upgrade to Pro?</h3>
-                            <p>Visit our <a href="pricing.html">Pricing page</a> and click "Upgrade to Pro". Follow the
-                                payment process and you'll have instant access to all Pro features.</p>
+                            <p>Visit our <a href="pricing.html">Pricing page</a> and click "Upgrade to Pro". Follow the payment process and you'll have instant access to all Pro features.</p>
                         </div>
-
+                        
                         <div class="faq-item-contact">
                             <h3>Can I request a custom feature for my team?</h3>
-                            <p>Absolutely! Select "Partnership Inquiry" in the form above and describe your
-                                requirements. We offer custom solutions for teams and advisors.</p>
+                            <p>Absolutely! Select "Partnership Inquiry" in the form above and describe your requirements. We offer custom solutions for teams and advisors.</p>
                         </div>
-
+                        
                         <div class="faq-item-contact">
                             <h3>How do I report a bug?</h3>
-                            <p>Select "Bug Report" in the form and include as much detail as possible: what you were
-                                doing, what happened vs. what you expected, and your device/browser info.</p>
+                            <p>Select "Bug Report" in the form and include as much detail as possible: what you were doing, what happened vs. what you expected, and your device/browser info.</p>
                         </div>
-
+                        
                         <div class="faq-item-contact">
                             <h3>Do you offer refunds?</h3>
-                            <p>Yes! We offer a 7-day money-back guarantee for Pro subscriptions. No questions asked.
-                                Just email us at hello@sipwise.com</p>
+                            <p>Yes! We offer a 7-day money-back guarantee for Pro subscriptions. No questions asked. Just email us at hello@sipwise.com</p>
                         </div>
                     </div>
                 </div>
@@ -200,44 +135,40 @@
             <div class="contact-sidebar">
                 <div class="card sticky-card">
                     <h3>Direct Contact</h3>
-
+                    
                     <div class="contact-method">
                         <div class="contact-icon">📧</div>
                         <div>
                             <h4>Email</h4>
                             <a href="mailto:hello@sipwise.com">hello@sipwise.com</a>
-                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Response time:
-                                24-48 hours</p>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Response time: 24-48 hours</p>
                         </div>
                     </div>
-
+                    
                     <div class="contact-method">
                         <div class="contact-icon">🐛</div>
                         <div>
                             <h4>Bug Reports</h4>
                             <a href="mailto:support@sipwise.com">support@sipwise.com</a>
-                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Priority support
-                                for Pro users</p>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Priority support for Pro users</p>
                         </div>
                     </div>
-
+                    
                     <div class="contact-method">
                         <div class="contact-icon">🔒</div>
                         <div>
                             <h4>Privacy Concerns</h4>
                             <a href="mailto:privacy@sipwise.com">privacy@sipwise.com</a>
-                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Data privacy
-                                inquiries</p>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Data privacy inquiries</p>
                         </div>
                     </div>
-
+                    
                     <div class="contact-method">
                         <div class="contact-icon">💼</div>
                         <div>
                             <h4>Business Inquiries</h4>
                             <a href="mailto:business@sipwise.com">business@sipwise.com</a>
-                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Partnerships &
-                                collaborations</p>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Partnerships & collaborations</p>
                         </div>
                     </div>
                 </div>
@@ -245,8 +176,7 @@
                 <div class="card" style="margin-top: 20px;">
                     <h3>Office Hours</h3>
                     <p style="font-size: 14px; color: var(--text-secondary);">
-                        We're a small team dedicated to building the best SIP calculator. We respond to all messages
-                        within 48 hours during business days.
+                        We're a small team dedicated to building the best SIP calculator. We respond to all messages within 48 hours during business days.
                     </p>
                     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
                         <p><strong>Monday - Friday</strong></p>
@@ -256,9 +186,8 @@
 
                 <div class="card" style="margin-top: 20px;">
                     <h3>Social Media</h3>
-                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">Follow us for updates
-                        and tips:</p>
-
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">Follow us for updates and tips:</p>
+                    
                     <div class="social-links">
                         <a href="#" class="social-link">
                             <span>🐦</span>
@@ -279,7 +208,7 @@
 
         <div class="card" style="margin-top: 40px;">
             <h2 style="text-align: center; margin-bottom: 24px;">What Our Users Say</h2>
-
+            
             <div class="testimonials-grid">
                 <div class="testimonial">
                     <p>"Quick response to my feature request. The team actually listens to users!"</p>
@@ -288,7 +217,7 @@
                         <span>Pro User</span>
                     </div>
                 </div>
-
+                
                 <div class="testimonial">
                     <p>"Reported a bug and it was fixed within 24 hours. Impressive support!"</p>
                     <div class="testimonial-author">
@@ -296,7 +225,7 @@
                         <span>Free User</span>
                     </div>
                 </div>
-
+                
                 <div class="testimonial">
                     <p>"Partnership inquiry was handled professionally. Great team to work with."</p>
                     <div class="testimonial-author">
@@ -312,10 +241,9 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h4>SIPWise</h4>
-                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">Plan your SIP. Predict your
-                    future.</p>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">Plan your SIP. Predict your future.</p>
             </div>
-
+            
             <div class="footer-section">
                 <h4>Product</h4>
                 <ul class="footer-links">
@@ -325,7 +253,7 @@
                     <li><a href="about.html">About</a></li>
                 </ul>
             </div>
-
+            
             <div class="footer-section">
                 <h4>Support</h4>
                 <ul class="footer-links">
@@ -333,16 +261,15 @@
                     <li><a href="privacy.html">Privacy Policy</a></li>
                 </ul>
             </div>
-
+            
             <div class="footer-section">
                 <h4>Legal</h4>
                 <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
-                    This tool is for educational purposes only. Please consult a SEBI registered financial advisor
-                    before making investment decisions.
+                    This tool is for educational purposes only. Please consult a SEBI registered financial advisor before making investment decisions.
                 </p>
             </div>
         </div>
-
+        
         <div class="footer-bottom">
             <p>&copy; 2025 SIPWise. All rights reserved.</p>
             <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
@@ -354,9 +281,9 @@
     <script src="script.js"></script>
     <script>
         // Contact form handling
-        document.getElementById('contactForm').addEventListener('submit', function (e) {
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
+            
             // Get form data
             const formData = {
                 name: document.getElementById('name').value,
@@ -365,28 +292,28 @@
                 subject: document.getElementById('subject').value,
                 message: document.getElementById('message').value
             };
-
+            
             // Show loading state
             const submitBtn = this.querySelector('button[type="submit"]');
             submitBtn.textContent = 'Sending...';
             submitBtn.disabled = true;
-
+            
             // Simulate form submission (replace with actual API call)
             setTimeout(() => {
                 // Show success message
                 document.getElementById('formSuccess').style.display = 'block';
                 document.getElementById('formError').style.display = 'none';
-
+                
                 // Reset form
                 this.reset();
                 submitBtn.textContent = 'Send Message';
                 submitBtn.disabled = false;
-
+                
                 // Hide success message after 5 seconds
                 setTimeout(() => {
                     document.getElementById('formSuccess').style.display = 'none';
                 }, 5000);
-
+                
                 // In production, replace with actual API call:
                 // fetch('/api/contact', {
                 //     method: 'POST',
@@ -400,5 +327,4 @@
         });
     </script>
 </body>
-
 </html>

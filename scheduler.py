@@ -40,7 +40,7 @@ class DataPipeline:
     3. Log completion status
     """
     
-    def __init__(self, db_url: str = "sqlite:///mutual_funds.db"):
+    def __init__(self, db_url: str = "sqlite:///mutual_funds_demo.db"):
         self.db_manager = DatabaseManager(db_url)
         self.ingestion = DataIngestion(self.db_manager)
     
